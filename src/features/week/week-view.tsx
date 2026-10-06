@@ -4,12 +4,13 @@ import { useState, type DragEvent } from "react";
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ContextSwitch } from "@/components/context-switch";
-import { ViewHeader } from "./view-header";
+import { ViewHeader } from "@/components/view-header";
 import { cn } from "@/lib/utils";
 import { CTX } from "@/lib/context";
 import { addDays, byTime, monAbbr, pad2, sameDay, weekStart, weekdayShort } from "@/lib/dates";
 import { dragProps, draggedId, isTaskDrag } from "@/lib/dnd";
 import { matches, useApp } from "@/lib/app-context";
+import { formatDuration, occursOn, scheduledMinutes } from "@/lib/task-utils";
 
 export function WeekView() {
   const { tasks, today, filter, update, openTask, openAdd } = useApp();
@@ -18,6 +19,15 @@ export function WeekView() {
   const start = addDays(weekStart(today), offset * 7);
   const days = Array.from({ length: 7 }, (_, i) => addDays(start, i));
   const vis = tasks.filter((t) => matches(t, filter));
+
+  // Carga de cada dia: itens em aberto + horas agendadas, para enxergar os dias mais cheios
+  const loads = days.map((day) => {
+    const open = vis.filter((t) => occursOn(t, day) && t.status !== "concluido");
+    const mins = scheduledMinutes(open);
+    return { count: open.length, mins, weight: open.length + mins / 60 };
+  });
+  const maxWeight = Math.max(...loads.map((l) => l.weight), 1);
+  const busiest = loads.reduce((b, l, i) => (l.weight > loads[b].weight ? i : b), 0);
 
   const drop = (e: DragEvent, day: Date) => {
     if (!isTaskDrag(e)) return;
@@ -41,10 +51,12 @@ export function WeekView() {
       </ViewHeader>
 
       <div className="grid gap-y-2 lg:grid-cols-7">
-        {days.map((day) => {
+        {days.map((day, di) => {
           const key = day.toISOString();
           const isToday = sameDay(day, today);
-          const items = vis.filter((t) => sameDay(t.due, day)).sort(byTime);
+          const items = vis.filter((t) => occursOn(t, day)).sort(byTime);
+          const load = loads[di];
+          const heavy = di === busiest && load.count >= 3;
           return (
             <section
               key={key}
@@ -66,10 +78,18 @@ export function WeekView() {
                 >
                   {pad2(day.getDate())}
                 </span>
+                <div className="flex min-w-0 flex-1 flex-col gap-1.5 lg:w-full lg:flex-none" title="Carga do dia">
+                  <span className={cn("font-mono text-[11px] tabular-nums text-muted-foreground", heavy && "font-medium text-waiting")}>
+                    {load.count === 0 ? "livre" : `${load.count} ${load.count === 1 ? "item" : "itens"}${load.mins ? ` · ${formatDuration(load.mins)}` : ""}`}
+                  </span>
+                  <span className="h-[3px] overflow-hidden rounded-full bg-muted">
+                    <span className={cn("block h-full rounded-full transition-[width] duration-300", heavy ? "bg-waiting" : "bg-foreground/40")} style={{ width: `${(load.weight / maxWeight) * 100}%` }} />
+                  </span>
+                </div>
                 <button
                   onClick={() => openAdd({ due: day })}
                   aria-label="Adicionar neste dia"
-                  className="ml-auto rounded-md p-2 text-muted-foreground opacity-100 transition-opacity hover:text-foreground lg:opacity-0 group-hover/day:opacity-100 lg:ml-0"
+                  className="grid h-10 w-10 shrink-0 place-items-center rounded-md text-muted-foreground opacity-100 transition-opacity hover:text-foreground lg:ml-0 lg:h-8 lg:w-8 lg:opacity-0 group-hover/day:opacity-100"
                 >
                   <Plus className="h-3.5 w-3.5" />
                 </button>

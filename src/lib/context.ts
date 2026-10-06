@@ -1,4 +1,4 @@
-import type { Context, Task } from "./types";
+import type { Context, Task } from "@/types";
 
 /** Classes literais (para o JIT do Tailwind enxergar). */
 export const CTX: Record<Context, { label: string; dot: string; text: string; tint: string; bar: string; edge: string; check: string }> = {

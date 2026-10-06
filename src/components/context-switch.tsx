@@ -3,7 +3,7 @@
 import { cn } from "@/lib/utils";
 import { CTX } from "@/lib/context";
 import { useApp } from "@/lib/app-context";
-import type { ContextFilter } from "@/lib/types";
+import type { ContextFilter } from "@/types";
 
 const OPTIONS: { id: ContextFilter; label: string; dot?: string; on: string }[] = [
   { id: "tudo", label: "Tudo", on: "bg-primary text-primary-foreground" },

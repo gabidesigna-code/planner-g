@@ -4,30 +4,35 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Menu, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sidebar } from "./sidebar";
-import { SidePanel } from "./side-panel";
-import { CommandMenu } from "./command-menu";
-import { HomeView } from "./views/home";
-import { WeekView } from "./views/week";
-import { CalendarView } from "./views/calendar";
-import { TasksView } from "./views/tasks";
+import { Toast } from "./toast";
+import { SidePanel } from "@/features/task-details/side-panel";
+import { CommandMenu } from "@/features/add/command-menu";
+import { TaskForm } from "@/features/task-form/task-form";
+import { HomeView } from "@/features/home/home-view";
+import { WeekView } from "@/features/week/week-view";
+import { CalendarView } from "@/features/calendar/calendar-view";
+import { TasksView } from "@/features/tasks/tasks-view";
 import { toggleTheme } from "./theme-toggle";
 import { AppCtx, type AddPreset, type AppApi, type ViewId } from "@/lib/app-context";
-import { seedTasks } from "@/lib/data";
 import { startOfDay } from "@/lib/dates";
 import { cn } from "@/lib/utils";
-import type { ContextFilter, Task } from "@/lib/types";
+import { useTasks } from "@/hooks/use-tasks";
+import { useToast } from "@/hooks/use-toast";
+import { storage } from "@/services/storage";
+import type { ContextFilter, Kind } from "@/types";
 
 const GO: Record<string, ViewId> = { h: "hoje", s: "semana", c: "calendario", t: "tarefas", w: "trabalho", p: "pessoal", d: "concluidos" };
 
 export function AppShell() {
-  const [tasks, setTasks] = useState<Task[]>(seedTasks);
+  const { toast, notify, dismiss } = useToast();
+  const { tasks, ready, recent, toggle, toggleSub, update, remove, create, reorder } = useTasks(notify);
   const [view, setView] = useState<ViewId>("hoje");
   const [filter, setFilter] = useState<ContextFilter>("tudo");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [collapsed, setCollapsed] = useState(false);
   const [mobileNav, setMobileNav] = useState(false);
   const [menu, setMenu] = useState<{ open: boolean; preset: AddPreset }>({ open: false, preset: {} });
-  const [toast, setToast] = useState<string | null>(null);
+  const [form, setForm] = useState<{ open: boolean; kind: Kind; preset: AddPreset }>({ open: false, kind: "tarefa", preset: {} });
   const [now, setNow] = useState<Date | null>(null);
   const today = useMemo(() => startOfDay(), []);
   const gPending = useRef(false);
@@ -39,19 +44,14 @@ export function AppShell() {
   }, []);
 
   useEffect(() => {
-    try { setCollapsed(localStorage.getItem("sidebar") === "collapsed"); } catch {}
+    setCollapsed(storage.get("sidebar") === "collapsed");
   }, []);
 
   const toggleCollapsed = useCallback(() => {
     setCollapsed((c) => {
-      try { localStorage.setItem("sidebar", c ? "open" : "collapsed"); } catch {}
+      storage.set("sidebar", c ? "open" : "collapsed");
       return !c;
     });
-  }, []);
-
-  const flash = useCallback((msg: string) => {
-    setToast(msg);
-    window.setTimeout(() => setToast(null), 1800);
   }, []);
 
   const navigate = useCallback((v: ViewId) => {
@@ -60,40 +60,10 @@ export function AppShell() {
     setSelectedId(null);
   }, []);
 
-  const toggle = useCallback((id: string) => {
-    setTasks((ts) =>
-      ts.map((t) =>
-        t.id !== id ? t : t.status === "concluido"
-          ? { ...t, status: "a-fazer", doneAt: undefined }
-          : { ...t, status: "concluido", doneAt: new Date() },
-      ),
-    );
-  }, []);
-
-  const toggleSub = useCallback((id: string, subId: string) => {
-    setTasks((ts) =>
-      ts.map((t) => {
-        if (t.id !== id || !t.subtasks) return t;
-        const subtasks = t.subtasks.map((s) => (s.id === subId ? { ...s, done: !s.done } : s));
-        const all = subtasks.every((s) => s.done);
-        const status = all && t.status !== "concluido" ? "pronto" : !all && t.status === "pronto" ? "em-andamento" : t.status;
-        return { ...t, subtasks, status };
-      }),
-    );
-  }, []);
-
-  const update = useCallback((id: string, patch: Partial<Task>) => {
-    setTasks((ts) => ts.map((t) => (t.id === id ? { ...t, ...patch } : t)));
-  }, []);
-
-  const remove = useCallback((id: string) => setTasks((ts) => ts.filter((t) => t.id !== id)), []);
   const openAdd = useCallback((preset: AddPreset = {}) => setMenu({ open: true, preset }), []);
   const closeMenu = useCallback(() => setMenu((m) => ({ ...m, open: false })), []);
-
-  const onCreate = useCallback((t: Task) => {
-    setTasks((ts) => [t, ...ts]);
-    flash(`Adicionado: ${t.title}`);
-  }, [flash]);
+  const openForm = useCallback((kind: Kind, preset: AddPreset = {}) => setForm({ open: true, kind, preset }), []);
+  const closeForm = useCallback(() => setForm((f) => ({ ...f, open: false })), []);
 
   // Atalhos de teclado
   useEffect(() => {
@@ -106,11 +76,13 @@ export function AppShell() {
       const el = e.target as HTMLElement;
       const typing = el.matches?.("input, textarea, select, [contenteditable]");
       if (e.key === "Escape") {
-        if (menu.open) closeMenu();
+        if (form.open) closeForm();
+        else if (menu.open) closeMenu();
+        else if (mobileNav) setMobileNav(false);
         else setSelectedId(null);
         return;
       }
-      if (typing || menu.open) return;
+      if (typing || menu.open || form.open) return;
       const k = e.key.toLowerCase();
       if (gPending.current) {
         gPending.current = false;
@@ -127,11 +99,13 @@ export function AppShell() {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [menu.open, openAdd, closeMenu, navigate, toggleCollapsed]);
+  }, [menu.open, form.open, mobileNav, openAdd, closeMenu, closeForm, navigate, toggleCollapsed]);
+
+  if (!ready) return <div className="min-h-screen" aria-busy="true" />;
 
   const api: AppApi = {
-    tasks, today, now, filter, setFilter, selectedId, toggle, toggleSub, update, remove,
-    openTask: setSelectedId, openAdd, navigate,
+    tasks, today, now, filter, setFilter, selectedId, recent, toggle, toggleSub, update, remove, reorder,
+    openTask: setSelectedId, openAdd, openForm, navigate,
   };
 
   let content: React.ReactNode;
@@ -139,31 +113,35 @@ export function AppShell() {
     case "hoje": content = <HomeView />; break;
     case "semana": content = <WeekView />; break;
     case "calendario": content = <CalendarView />; break;
-    default: content = <TasksView mode={view} />;
+    default: content = <TasksView key={view} mode={view} />;
   }
-
-  const sidebar = (
-    <Sidebar view={view} collapsed={collapsed} onNavigate={navigate} onToggleCollapsed={toggleCollapsed} />
-  );
 
   return (
     <AppCtx.Provider value={api}>
       <div className="min-h-screen">
         <aside className={cn("fixed inset-y-0 left-0 z-20 hidden bg-sidebar transition-[width] duration-200 ease-out lg:block", collapsed ? "w-14" : "w-52")}>
-          {sidebar}
+          <Sidebar view={view} collapsed={collapsed} onNavigate={navigate} onToggleCollapsed={toggleCollapsed} />
         </aside>
 
         <div className="sticky top-0 z-20 flex items-center justify-between bg-background/85 px-3 py-2 backdrop-blur lg:hidden">
-          <Button variant="ghost" size="icon" onClick={() => setMobileNav(true)} aria-label="Abrir menu"><Menu className="h-[18px] w-[18px]" /></Button>
+          <Button variant="ghost" size="icon" onClick={() => setMobileNav(true)} aria-label="Abrir menu" aria-expanded={mobileNav}><Menu className="h-[18px] w-[18px]" /></Button>
           <span className="text-[17px] font-semibold tracking-[-0.04em]">g<span className="text-work">.</span></span>
           <span className="w-10" />
         </div>
-        {mobileNav && (
-          <div className="fixed inset-0 z-40 lg:hidden">
-            <div className="animate-fade absolute inset-0 bg-foreground/25" onClick={() => setMobileNav(false)} />
-            <aside className="animate-slideIn absolute inset-y-0 left-0 w-72 max-w-[85vw] bg-sidebar shadow-pop"><Sidebar view={view} collapsed={false} touch onNavigate={navigate} onToggleCollapsed={toggleCollapsed} /></aside>
-          </div>
-        )}
+
+        {/* Drawer do celular: sempre montado, para animar a entrada e a saída */}
+        <div className={cn("fixed inset-0 z-40 lg:hidden", !mobileNav && "pointer-events-none")} inert={!mobileNav}>
+          <div className={cn("absolute inset-0 bg-foreground/25 transition-opacity duration-200", mobileNav ? "opacity-100" : "opacity-0")} onClick={() => setMobileNav(false)} />
+          <aside
+            aria-label="Menu"
+            className={cn(
+              "absolute inset-y-0 left-0 w-72 max-w-[85vw] bg-sidebar transition-transform duration-[250ms] ease-[cubic-bezier(.2,.8,.2,1)]",
+              mobileNav ? "translate-x-0 shadow-pop" : "-translate-x-full",
+            )}
+          >
+            <Sidebar view={view} collapsed={false} touch onNavigate={navigate} onToggleCollapsed={toggleCollapsed} />
+          </aside>
+        </div>
 
         <main className={cn("transition-[padding] duration-200 ease-out", collapsed ? "lg:pl-14" : "lg:pl-52")}>{content}</main>
 
@@ -181,17 +159,13 @@ export function AppShell() {
         <CommandMenu
           open={menu.open}
           preset={menu.preset}
-          defaultContext={filter === "pessoal" || view === "pessoal" ? "pessoal" : "trabalho"}
+          defaultContext={menu.preset.context ?? (filter === "pessoal" || view === "pessoal" ? "pessoal" : "trabalho")}
           onClose={closeMenu}
-          onCreate={onCreate}
+          onCreate={create}
           onToggleSidebar={toggleCollapsed}
         />
-
-        {toast && (
-          <div className="animate-menuIn fixed bottom-6 left-1/2 z-[60] -translate-x-1/2 rounded-lg bg-foreground px-4 py-2 text-[13px] font-medium text-background shadow-pop">
-            {toast}
-          </div>
-        )}
+        <TaskForm open={form.open} kind={form.kind} preset={form.preset} today={today} now={now} onClose={closeForm} onSubmit={create} />
+        <Toast toast={toast} onDismiss={dismiss} />
       </div>
     </AppCtx.Provider>
   );

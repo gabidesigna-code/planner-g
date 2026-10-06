@@ -1,17 +1,19 @@
 "use client";
 
+import { useState } from "react";
 import { ChevronRight } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 import { CTX, detail } from "@/lib/context";
 import { relDay } from "@/lib/dates";
-import { dragProps } from "@/lib/dnd";
+import { dragProps, draggedId, isTaskDrag } from "@/lib/dnd";
 import { useApp } from "@/lib/app-context";
-import type { Task } from "@/lib/types";
+import type { Task } from "@/types";
 
 /** Linha simples: título + uma linha de apoio. O resto vive no painel lateral. */
-export function TaskItem({ task, showDay, showTime }: { task: Task; showDay?: boolean; showTime?: boolean }) {
-  const { toggle, openTask, today, selectedId } = useApp();
+export function TaskItem({ task, showDay, showTime, reorderable }: { task: Task; showDay?: boolean; showTime?: boolean; reorderable?: boolean }) {
+  const { toggle, openTask, today, selectedId, reorder } = useApp();
+  const [over, setOver] = useState(false);
   const done = task.status === "concluido";
   const subs = task.subtasks ?? [];
   const subsDone = subs.filter((s) => s.done).length;
@@ -21,11 +23,24 @@ export function TaskItem({ task, showDay, showTime }: { task: Task; showDay?: bo
   return (
     <div
       {...dragProps(task.id)}
+      {...(reorderable && {
+        onDragOver: (e: React.DragEvent) => { if (isTaskDrag(e)) { e.preventDefault(); e.stopPropagation(); setOver(true); } },
+        onDragLeave: () => setOver(false),
+        onDrop: (e: React.DragEvent) => {
+          if (!isTaskDrag(e)) return;
+          e.preventDefault();
+          e.stopPropagation();
+          setOver(false);
+          reorder(draggedId(e), task.id);
+        },
+      })}
       onClick={() => openTask(task.id)}
       className={cn(
         "group -mx-3 flex cursor-pointer items-start gap-3 rounded-lg px-3 py-3 transition-colors sm:py-2 duration-100 active:cursor-grabbing",
         "hover:bg-hover [&[draggable=true]:active]:opacity-60",
         selectedId === task.id && "bg-muted",
+        over && "shadow-[inset_0_2px_0_hsl(var(--foreground)/0.4)]",
+        done && "opacity-60",
       )}
     >
       <span className="mt-[2px] shrink-0" onClick={(e) => e.stopPropagation()}>

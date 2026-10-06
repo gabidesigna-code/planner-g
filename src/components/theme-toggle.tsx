@@ -3,13 +3,12 @@
 import { useEffect, useState } from "react";
 import { Moon, Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { storage } from "@/services/storage";
 
 export function toggleTheme() {
   const next = !document.documentElement.classList.contains("dark");
   document.documentElement.classList.toggle("dark", next);
-  try {
-    localStorage.setItem("theme", next ? "dark" : "light");
-  } catch {}
+  storage.set("theme", next ? "dark" : "light");
   return next;
 }
 

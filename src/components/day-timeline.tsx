@@ -7,7 +7,7 @@ import { CTX } from "@/lib/context";
 import { fromMin, pad2, toMin } from "@/lib/dates";
 import { dragProps, draggedId, isTaskDrag } from "@/lib/dnd";
 import { useApp } from "@/lib/app-context";
-import type { Task } from "@/lib/types";
+import type { Task } from "@/types";
 
 const HOUR_H = 64;
 

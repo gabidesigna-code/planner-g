@@ -10,10 +10,12 @@ import { cn } from "@/lib/utils";
 import { CTX } from "@/lib/context";
 import { addDays, byTime, dayTag, diffDays, greeting, monAbbr, pad2, weekdayName } from "@/lib/dates";
 import { draggedId, isTaskDrag } from "@/lib/dnd";
-import { matches, useApp } from "@/lib/app-context";
-import type { Task } from "@/lib/types";
+import { isOpen, matches, useApp } from "@/lib/app-context";
+import { canBeOverdue, occursOn } from "@/lib/task-utils";
+import { storage } from "@/services/storage";
+import type { Task } from "@/types";
 
-type Peek = "atrasadas" | "aguardando" | "concluidas" | null;
+type Peek = "aguardando" | "concluidas" | null;
 
 function SectionLabel({ children, right }: { children: React.ReactNode; right?: React.ReactNode }) {
   return (
@@ -26,30 +28,29 @@ function SectionLabel({ children, right }: { children: React.ReactNode; right?: 
 }
 
 export function HomeView() {
-  const { tasks, today, now, filter, update, openAdd } = useApp();
+  const { tasks, today, now, filter, recent, update, openAdd } = useApp();
   const [peek, setPeek] = useState<Peek>(null);
   const [expanded, setExpanded] = useState<number | null>(null);
   const [dropDay, setDropDay] = useState<number | null>(null);
   const [dropUntimed, setDropUntimed] = useState(false);
 
   const vis = tasks.filter((t) => matches(t, filter));
-  const open = vis.filter((t) => t.status !== "concluido");
+  const open = vis.filter((t) => isOpen(t, recent));
   const waiting = open.filter((t) => t.status === "aguardando");
   const active = open.filter((t) => t.status !== "aguardando");
-  const overdue = active.filter((t) => diffDays(t.due, today) < 0).sort((a, b) => diffDays(a.due, b.due));
-  const todays = vis.filter((t) => diffDays(t.due, today) === 0 && t.status !== "aguardando");
+  const overdue = active.filter((t) => canBeOverdue(t) && diffDays(t.due, today) < 0 && t.status !== "concluido").sort((a, b) => diffDays(a.due, b.due));
+  const todays = vis.filter((t) => occursOn(t, today) && t.status !== "aguardando");
   const timeline = todays.filter((t) => t.time);
-  const untimed = todays.filter((t) => !t.time && t.status !== "concluido");
+  const untimed = todays.filter((t) => !t.time && isOpen(t, recent));
   const doneToday = vis.filter((t) => t.status === "concluido" && t.doneAt && diffDays(t.doneAt, today) === 0);
 
   const days = Array.from({ length: 7 }, (_, i) => addDays(today, i + 1)).map((d, i) => ({
     offset: i + 1,
     date: d,
-    items: active.filter((t) => diffDays(t.due, d) === 0).sort(byTime),
+    items: active.filter((t) => occursOn(t, d) && t.status !== "concluido").sort(byTime),
   })).filter((d) => d.items.length > 0);
 
   const peeks: { id: Exclude<Peek, null>; n: number; label: string; dot: string; tone: string; items: Task[] }[] = [
-    { id: "atrasadas", n: overdue.length, label: overdue.length === 1 ? "atrasada" : "atrasadas", dot: "bg-urgent", tone: "text-urgent", items: overdue },
     { id: "aguardando", n: waiting.length, label: "aguardando", dot: "bg-waiting", tone: "text-waiting", items: waiting },
     { id: "concluidas", n: doneToday.length, label: doneToday.length === 1 ? "concluída" : "concluídas", dot: "bg-done", tone: "text-done", items: doneToday },
   ];
@@ -127,7 +128,7 @@ export function HomeView() {
         {untimed.length === 0 ? (
           <p className="py-3 text-sm text-muted-foreground/70">Nada solto por enquanto.</p>
         ) : (
-          untimed.map((t) => <TaskItem key={t.id} task={t} />)
+          untimed.map((t) => <TaskItem key={t.id} task={t} reorderable />)
         )}
         <button
           onClick={() => openAdd({ due: today })}
@@ -136,6 +137,17 @@ export function HomeView() {
           <Plus className="h-[18px] w-[18px] p-0.5" strokeWidth={1.8} /> Nova tarefa
         </button>
       </section>
+
+      {overdue.length > 0 && (
+        <section className="mt-10 sm:mt-12">
+          <div className="mb-1 flex items-center gap-3">
+            <span className="label-mono text-urgent">Atrasadas</span>
+            <span className="font-mono text-[11px] tabular-nums text-urgent/70">{overdue.length}</span>
+            <span className="h-px flex-1 bg-border" />
+          </div>
+          {overdue.map((t) => <TaskItem key={t.id} task={t} showDay />)}
+        </section>
+      )}
 
       {days.length > 0 && (
         <section className="mt-10 sm:mt-12">
@@ -186,7 +198,7 @@ export function HomeView() {
 function QuickNote() {
   const [text, setText] = useState("");
   useEffect(() => {
-    try { setText(localStorage.getItem("quick-note") ?? ""); } catch {}
+    setText(storage.get("quick-note") ?? "");
   }, []);
   return (
     <section className="mt-10 sm:mt-12">
@@ -195,7 +207,7 @@ function QuickNote() {
         value={text}
         onChange={(e) => {
           setText(e.target.value);
-          try { localStorage.setItem("quick-note", e.target.value); } catch {}
+          storage.set("quick-note", e.target.value);
         }}
         placeholder="Anote qualquer coisa…"
         rows={3}

@@ -5,12 +5,14 @@ import { Plus, Trash2, X } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 import { CTX } from "@/lib/context";
-import { fromIso, isoDate } from "@/lib/dates";
+import { addDays, fromIso, isoDate, weekStart } from "@/lib/dates";
+import { useScrollLock } from "@/hooks/use-scroll-lock";
+import { listCategories } from "@/services/category-service";
 import { useApp } from "@/lib/app-context";
 import {
-  CATEGORIES, KIND_LABEL, PRIORITY_LABEL, STATUS_LABEL,
-  type Context, type Priority, type Status, type Task,
-} from "@/lib/types";
+  KIND_LABEL, PRIORITY_LABEL, RECURRENCE_LABEL, STATUS_LABEL,
+  type Context, type Priority, type Recurrence, type Status, type Task,
+} from "@/types";
 
 const prop =
   "h-10 w-full rounded-md bg-transparent px-2 text-[13.5px] sm:h-8 transition-colors duration-100 placeholder:text-muted-foreground/50 hover:bg-hover focus:bg-hover focus:outline-none";
@@ -30,14 +32,15 @@ export function SidePanel() {
   if (!task) return null;
   return (
     <>
-      <div className="animate-fade fixed inset-0 z-30 bg-hover lg:bg-transparent" onClick={() => openTask(null)} />
+      <div className="animate-fade fixed inset-0 z-30 bg-foreground/25 sm:bg-hover lg:bg-transparent" onClick={() => openTask(null)} />
       <PanelBody key={task.id} task={task} />
     </>
   );
 }
 
 function PanelBody({ task }: { task: Task }) {
-  const { update, remove, toggle, toggleSub, openTask } = useApp();
+  const { update, remove, toggle, toggleSub, openTask, today } = useApp();
+  useScrollLock(true, "(max-width: 639px)");
   const [newSub, setNewSub] = useState("");
   const ctx = CTX[task.context];
   const done = task.status === "concluido";
@@ -56,7 +59,7 @@ function PanelBody({ task }: { task: Task }) {
     <aside
       role="dialog"
       aria-label="Detalhes"
-      className="scroll-thin animate-slideIn fixed inset-y-0 right-0 z-40 flex w-full flex-col sm:max-w-[420px] overflow-y-auto border-l border-border bg-surface shadow-pop"
+      className="scroll-thin animate-sheetUp sm:animate-slideIn fixed inset-x-0 bottom-0 z-40 flex max-h-[92dvh] flex-col overflow-y-auto overscroll-contain rounded-t-2xl border-t border-border bg-surface shadow-pop sm:inset-x-auto sm:inset-y-0 sm:right-0 sm:max-h-none sm:w-[420px] sm:rounded-none sm:border-l sm:border-t-0"
     >
       <div className="flex items-center justify-between px-5 pt-4">
         <div className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
@@ -105,6 +108,29 @@ function PanelBody({ task }: { task: Task }) {
         <Row label="Data">
           <input type="date" value={isoDate(task.due)} onChange={(e) => e.target.value && set({ due: fromIso(e.target.value) })} className={prop} />
         </Row>
+        <Row label="Reagendar">
+          <div className="flex flex-wrap gap-1">
+            {[
+              { label: "Hoje", to: today },
+              { label: "Amanhã", to: addDays(today, 1) },
+              { label: "Próx. segunda", to: addDays(weekStart(today), 7) },
+              { label: "+1 semana", to: addDays(task.due, 7) },
+            ].map(({ label, to }) => (
+              <button
+                key={label}
+                onClick={() => set({ due: to, endDate: task.endDate ? new Date(to.getTime() + (task.endDate.getTime() - task.due.getTime())) : undefined })}
+                className="h-10 rounded-md px-2.5 text-[13px] text-muted-foreground ring-1 ring-border transition-colors hover:bg-hover hover:text-foreground sm:h-8 sm:px-2"
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </Row>
+        {task.kind === "evento" && (
+          <Row label="Até">
+            <input type="date" value={task.endDate ? isoDate(task.endDate) : ""} min={isoDate(task.due)} onChange={(e) => set({ endDate: e.target.value && e.target.value > isoDate(task.due) ? fromIso(e.target.value) : undefined })} className={prop} />
+          </Row>
+        )}
         <Row label="Horário">
           <div className="flex items-center gap-1">
             <input type="time" value={task.time ?? ""} onChange={(e) => set({ time: e.target.value || undefined, end: e.target.value ? task.end : undefined })} className={prop} aria-label="Início" />
@@ -112,12 +138,17 @@ function PanelBody({ task }: { task: Task }) {
             <input type="time" value={task.end ?? ""} disabled={!task.time} onChange={(e) => set({ end: e.target.value || undefined })} className={cn(prop, "disabled:opacity-40")} aria-label="Fim" />
           </div>
         </Row>
+        {(task.kind === "compromisso" || task.kind === "evento") && (
+          <Row label="Local">
+            <input value={task.location ?? ""} onChange={(e) => set({ location: e.target.value || undefined })} placeholder="Onde?" className={prop} />
+          </Row>
+        )}
         <Row label="Contexto">
           <div className="flex gap-1">
             {(["trabalho", "pessoal"] as Context[]).map((c) => (
               <button
                 key={c}
-                onClick={() => set({ context: c, category: CATEGORIES[c].includes(task.category) ? task.category : "Outros", client: c === "pessoal" ? undefined : task.client })}
+                onClick={() => set({ context: c, category: listCategories(c).includes(task.category) ? task.category : "Outros", client: c === "pessoal" ? undefined : task.client })}
                 className={cn(
                   "flex h-10 items-center gap-2 rounded-md px-3 text-[13.5px] sm:h-8 sm:px-2.5 transition-colors",
                   task.context === c ? "bg-hover font-medium" : "text-muted-foreground hover:bg-hover",
@@ -130,7 +161,7 @@ function PanelBody({ task }: { task: Task }) {
         </Row>
         <Row label="Categoria">
           <select value={task.category} onChange={(e) => set({ category: e.target.value })} className={prop}>
-            {[...new Set([task.category, ...CATEGORIES[task.context]])].map((c) => <option key={c}>{c}</option>)}
+            {[...new Set([task.category, ...listCategories(task.context)])].map((c) => <option key={c}>{c}</option>)}
           </select>
         </Row>
         {task.context === "trabalho" && (
@@ -156,6 +187,13 @@ function PanelBody({ task }: { task: Task }) {
             ))}
           </div>
         </Row>
+        {(task.kind === "tarefa" || task.kind === "compromisso") && (
+          <Row label="Repete">
+            <select value={task.recurrence ?? "none"} onChange={(e) => set({ recurrence: e.target.value === "none" ? undefined : (e.target.value as Recurrence) })} className={prop}>
+              {(Object.keys(RECURRENCE_LABEL) as Recurrence[]).map((r) => <option key={r} value={r}>{RECURRENCE_LABEL[r]}</option>)}
+            </select>
+          </Row>
+        )}
         <Row label="Status">
           <select value={task.status} onChange={(e) => set({ status: e.target.value as Status, doneAt: e.target.value === "concluido" ? new Date() : undefined })} className={prop}>
             {(Object.keys(STATUS_LABEL) as Status[]).map((s) => <option key={s} value={s}>{STATUS_LABEL[s]}</option>)}

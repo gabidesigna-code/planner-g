@@ -2,16 +2,16 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
-  Bell, CalendarDays, Columns3, Check, Clock, Diamond, ListChecks, Moon, Square, Sun, PanelLeft,
+  Bell, CalendarDays, Columns3, Check, Clock, Diamond, ListChecks, Moon, SlidersHorizontal, Square, Sun, PanelLeft,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CTX } from "@/lib/context";
 import { diffDays, fromMin, longDay, pad2, toMin } from "@/lib/dates";
 import { parseQuick } from "@/lib/parse";
-import { toggleTheme } from "./theme-toggle";
+import { toggleTheme } from "@/components/theme-toggle";
 import { useApp, type AddPreset, type ViewId } from "@/lib/app-context";
-import type { Context, Kind, Task } from "@/lib/types";
+import type { Context, Kind, Task } from "@/types";
 
 interface Entry {
   id: string;
@@ -21,6 +21,8 @@ interface Entry {
   shortcut?: string;
   run: () => void;
   dot?: string;
+  /** Abre o formulário completo (só nas opções de adicionar) */
+  details?: () => void;
 }
 
 const TYPES: { kind: Kind; label: string; icon: LucideIcon }[] = [
@@ -38,7 +40,7 @@ export function CommandMenu({ open, preset, defaultContext, onClose, onCreate, o
   onCreate: (t: Task) => void;
   onToggleSidebar: () => void;
 }) {
-  const { today, navigate } = useApp();
+  const { today, navigate, openForm } = useApp();
   const [query, setQuery] = useState("");
   const [ctx, setCtx] = useState<Context>(defaultContext);
   const [idx, setIdx] = useState(0);
@@ -64,8 +66,13 @@ export function CommandMenu({ open, preset, defaultContext, onClose, onCreate, o
   })();
 
   const entries: Entry[] = useMemo(() => {
+    // Com texto: cria na hora. Sem texto (ou pelo botão de detalhes): abre o formulário completo.
+    const details = (kind: Kind) => () => {
+      openForm(kind, { context: ctx, due: dueDate, time, title: parsed.title || undefined });
+      onClose();
+    };
     const create = (kind: Kind) => () => {
-      if (!parsed.title) return inputRef.current?.focus();
+      if (!parsed.title) return details(kind)();
       const withSlot = (kind === "compromisso" || kind === "evento") && time;
       onCreate({
         id: crypto.randomUUID(),
@@ -88,6 +95,7 @@ export function CommandMenu({ open, preset, defaultContext, onClose, onCreate, o
       icon: t.icon,
       shortcut: `⌘${i + 1}`,
       run: create(t.kind),
+      details: details(t.kind),
     }));
     if (query.trim()) return adds;
     const go = (v: ViewId, label: string, icon: LucideIcon, shortcut: string, dot?: string): Entry => ({
@@ -105,7 +113,7 @@ export function CommandMenu({ open, preset, defaultContext, onClose, onCreate, o
       { id: "theme", label: "Alternar tema claro/escuro", icon: Moon, run: () => { toggleTheme(); onClose(); } },
       { id: "sidebar", label: "Recolher/expandir menu", icon: PanelLeft, shortcut: "[", run: () => { onToggleSidebar(); onClose(); } },
     ];
-  }, [parsed.title, query, when, ctx, time, dueDate, onCreate, onClose, navigate, onToggleSidebar]);
+  }, [parsed.title, query, when, ctx, time, dueDate, onCreate, onClose, navigate, openForm, onToggleSidebar]);
 
   if (!open) return null;
 
@@ -114,7 +122,7 @@ export function CommandMenu({ open, preset, defaultContext, onClose, onCreate, o
   function onKeyDown(e: React.KeyboardEvent) {
     if (e.key === "ArrowDown") { e.preventDefault(); setIdx((i) => (i + 1) % entries.length); }
     else if (e.key === "ArrowUp") { e.preventDefault(); setIdx((i) => (i - 1 + entries.length) % entries.length); }
-    else if (e.key === "Enter") { e.preventDefault(); entries[safeIdx]?.run(); }
+    else if (e.key === "Enter") { e.preventDefault(); const en = entries[safeIdx]; if (e.shiftKey && en?.details) en.details(); else en?.run(); }
     else if (e.key === "Tab") { e.preventDefault(); setCtx((c) => (c === "trabalho" ? "pessoal" : "trabalho")); }
     else if ((e.metaKey || e.ctrlKey) && /^[1-4]$/.test(e.key)) { e.preventDefault(); entries[Number(e.key) - 1]?.run(); }
   }
@@ -148,10 +156,11 @@ export function CommandMenu({ open, preset, defaultContext, onClose, onCreate, o
             return (
               <li key={en.id}>
                 {i === TYPES.length && <p className="label-mono px-3 pb-1 pt-3 text-[10px]">Navegar</p>}
+                <div className={cn("flex items-center rounded-lg transition-colors duration-75", i === safeIdx && "bg-hover")}>
                 <button
                   onMouseEnter={() => setIdx(i)}
                   onClick={en.run}
-                  className={cn("flex w-full items-center gap-3 rounded-lg px-3 py-3 text-left sm:py-2 transition-colors duration-75", i === safeIdx && "bg-hover")}
+                  className="flex min-w-0 flex-1 items-center gap-3 rounded-lg px-3 py-3 text-left sm:py-2"
                 >
                   {en.dot ? (
                     <span className="grid h-[18px] w-[18px] place-items-center"><span className={cn("h-2 w-2 rounded-full", en.dot)} /></span>
@@ -163,6 +172,17 @@ export function CommandMenu({ open, preset, defaultContext, onClose, onCreate, o
                   {!en.hint && <span className="flex-1" />}
                   {en.shortcut && <span className="kbd hidden shrink-0 sm:grid">{en.shortcut}</span>}
                 </button>
+                {en.details && parsed.title && (
+                  <button
+                    onClick={en.details}
+                    aria-label={`${en.label}: mais detalhes`}
+                    title="Mais detalhes (⇧⏎)"
+                    className="mr-1.5 grid h-10 w-10 shrink-0 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground sm:h-8 sm:w-8"
+                  >
+                    <SlidersHorizontal className="h-4 w-4" strokeWidth={1.6} />
+                  </button>
+                )}
+                </div>
               </li>
             );
           })}
@@ -170,6 +190,7 @@ export function CommandMenu({ open, preset, defaultContext, onClose, onCreate, o
         <div className="hidden items-center gap-4 border-t border-border px-4 py-2.5 font-mono sm:flex text-[11px] text-muted-foreground">
           <span><span className="kbd">↑↓</span> navegar</span>
           <span><span className="kbd">⏎</span> criar</span>
+          <span><span className="kbd">⇧⏎</span> detalhes</span>
           <span><span className="kbd">esc</span> fechar</span>
           <span className="ml-auto hidden sm:inline">{pad2(today.getDate())}/{pad2(today.getMonth() + 1)}</span>
         </div>

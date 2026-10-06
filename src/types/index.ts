@@ -3,6 +3,7 @@ export type ContextFilter = "tudo" | Context;
 export type Kind = "tarefa" | "compromisso" | "lembrete" | "evento";
 export type Status = "a-fazer" | "em-andamento" | "aguardando" | "pronto" | "concluido";
 export type Priority = "urgente" | "alta" | "normal" | "baixa";
+export type Recurrence = "none" | "daily" | "weekly" | "monthly" | "yearly";
 
 export interface Subtask {
   id: string;
@@ -24,6 +25,9 @@ export interface Task {
   /** "HH:MM". Sem valor = sem horário. */
   time?: string;
   end?: string;
+  /** Último dia de um evento que dura vários dias (o início é `due`) */
+  endDate?: Date;
+  location?: string;
   /** Cliente / empresa (só Trabalho) */
   client?: string;
   priority: Priority;
@@ -31,7 +35,7 @@ export interface Task {
   note?: string;
   /** Quem está sendo aguardado: cliente, banco, prefeitura, Receita, convênio… */
   waitingOn?: string;
-  recurring?: boolean;
+  recurrence?: Recurrence;
   subtasks?: Subtask[];
   doneAt?: Date;
 }
@@ -58,7 +62,10 @@ export const KIND_LABEL: Record<Kind, string> = {
   evento: "Evento",
 };
 
-export const CATEGORIES: Record<Context, string[]> = {
-  trabalho: ["Fiscal", "Financeiro", "Reuniões", "Clientes", "Administrativo", "Outros"],
-  pessoal: ["Casa", "Compras", "Saúde", "Família", "Compromissos", "Financeiro pessoal", "Lazer", "Outros"],
+export const RECURRENCE_LABEL: Record<Recurrence, string> = {
+  none: "Não repete",
+  daily: "Todo dia",
+  weekly: "Toda semana",
+  monthly: "Todo mês",
+  yearly: "Todo ano",
 };
