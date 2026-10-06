@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarDays, Columns3, Check, ListChecks, PanelLeftClose, PanelLeftOpen, Sun, type LucideIcon } from "lucide-react";
+import { CalendarDays, Columns3, Check, ListChecks, PanelLeftClose, PanelLeftOpen, Palette, Sun, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "./theme-toggle";
 import { Monogram, Wordmark } from "./brand/logo";
@@ -29,9 +29,10 @@ interface Props {
   touch?: boolean;
   onNavigate: (v: ViewId) => void;
   onToggleCollapsed: () => void;
+  onOpenAppearance: () => void;
 }
 
-export function Sidebar({ view, collapsed, touch, onNavigate, onToggleCollapsed }: Props) {
+export function Sidebar({ view, collapsed, touch, onNavigate, onToggleCollapsed, onOpenAppearance }: Props) {
   return (
     <div className="pb-safe flex h-full flex-col px-2.5 py-4">
       <div className={cn("mb-6 flex h-10 items-center text-foreground", collapsed ? "justify-center" : "px-2.5")}>
@@ -69,7 +70,12 @@ export function Sidebar({ view, collapsed, touch, onNavigate, onToggleCollapsed 
 
       <div className={cn("mt-auto flex gap-1", collapsed ? "flex-col items-center" : "items-center justify-between px-1")}>
         {touch ? (
-          <span className="px-2 text-[13px] text-muted-foreground">Tema</span>
+          <button
+            onClick={onOpenAppearance}
+            className="flex h-11 items-center gap-2.5 rounded-lg px-2.5 text-[15px] text-foreground/80 transition-colors hover:bg-surface/70 hover:text-foreground"
+          >
+            <Palette className="h-[16px] w-[16px]" strokeWidth={1.7} /> Aparência
+          </button>
         ) : (
           <button
             onClick={onToggleCollapsed}
@@ -80,7 +86,19 @@ export function Sidebar({ view, collapsed, touch, onNavigate, onToggleCollapsed 
             {collapsed ? <PanelLeftOpen className="h-[15px] w-[15px]" strokeWidth={1.7} /> : <PanelLeftClose className="h-[15px] w-[15px]" strokeWidth={1.7} />}
           </button>
         )}
-        <ThemeToggle />
+        <div className={cn("flex gap-0.5", collapsed && "flex-col items-center")}>
+          {!touch && (
+            <button
+              onClick={onOpenAppearance}
+              aria-label="Aparência e paleta"
+              title="Aparência e paleta"
+              className="grid h-8 w-8 place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-hover hover:text-foreground"
+            >
+              <Palette className="h-[15px] w-[15px]" strokeWidth={1.7} />
+            </button>
+          )}
+          <ThemeToggle />
+        </div>
       </div>
     </div>
   );

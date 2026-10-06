@@ -2,14 +2,14 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
-  Bell, CalendarDays, Columns3, Check, Clock, Diamond, ListChecks, Moon, SlidersHorizontal, Square, Sun, PanelLeft,
+  Bell, CalendarDays, Columns3, Check, Clock, Diamond, ListChecks, Moon, Palette, SlidersHorizontal, Square, Sun, PanelLeft,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CTX } from "@/lib/context";
 import { diffDays, fromMin, longDay, pad2, toMin } from "@/lib/dates";
 import { parseQuick } from "@/lib/parse";
-import { toggleTheme } from "@/components/theme-toggle";
+import { useTheme } from "@/theme/theme-provider";
 import { useApp, type AddPreset, type ViewId } from "@/lib/app-context";
 import type { Context, Kind, Task } from "@/types";
 
@@ -40,7 +40,8 @@ export function CommandMenu({ open, preset, defaultContext, onClose, onCreate, o
   onCreate: (t: Task) => void;
   onToggleSidebar: () => void;
 }) {
-  const { today, navigate, openForm } = useApp();
+  const { today, navigate, openForm, openAppearance } = useApp();
+  const { toggleMode } = useTheme();
   const [query, setQuery] = useState("");
   const [ctx, setCtx] = useState<Context>(defaultContext);
   const [idx, setIdx] = useState(0);
@@ -110,10 +111,11 @@ export function CommandMenu({ open, preset, defaultContext, onClose, onCreate, o
       go("trabalho", "Trabalho", Square, "G W", CTX.trabalho.dot),
       go("pessoal", "Pessoal", Square, "G P", CTX.pessoal.dot),
       go("concluidos", "Concluídos", Check, "G D"),
-      { id: "theme", label: "Alternar tema claro/escuro", icon: Moon, run: () => { toggleTheme(); onClose(); } },
+      { id: "appearance", label: "Aparência e paleta", icon: Palette, run: () => { onClose(); openAppearance(); } },
+      { id: "theme", label: "Alternar claro/escuro", icon: Moon, shortcut: "⇧D", run: () => { toggleMode(); onClose(); } },
       { id: "sidebar", label: "Recolher/expandir menu", icon: PanelLeft, shortcut: "[", run: () => { onToggleSidebar(); onClose(); } },
     ];
-  }, [parsed.title, query, when, ctx, time, dueDate, onCreate, onClose, navigate, openForm, onToggleSidebar]);
+  }, [parsed.title, query, when, ctx, time, dueDate, onCreate, onClose, navigate, openForm, openAppearance, toggleMode, onToggleSidebar]);
 
   if (!open) return null;
 

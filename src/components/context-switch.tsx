@@ -7,8 +7,8 @@ import type { ContextFilter } from "@/types";
 
 const OPTIONS: { id: ContextFilter; label: string; dot?: string; on: string }[] = [
   { id: "tudo", label: "Tudo", on: "bg-primary text-primary-foreground" },
-  { id: "trabalho", label: "Trabalho", dot: CTX.trabalho.dot, on: "bg-work text-white" },
-  { id: "pessoal", label: "Pessoal", dot: CTX.pessoal.dot, on: "bg-personal text-white" },
+  { id: "trabalho", label: "Trabalho", dot: CTX.trabalho.dot, on: "bg-work text-work-foreground" },
+  { id: "pessoal", label: "Pessoal", dot: CTX.pessoal.dot, on: "bg-personal text-personal-foreground" },
 ];
 
 /** Chips compactos. No celular rolam na horizontal; atalhos 1 · 2 · 3. */
@@ -35,7 +35,7 @@ export function ContextSwitch() {
                 : "bg-surface/70 text-foreground/70 ring-1 ring-border/70 hover:bg-hover hover:text-foreground sm:bg-transparent sm:ring-0",
             )}
           >
-            {o.dot && <span className={cn("h-1.5 w-1.5 rounded-full", active ? "bg-white" : o.dot)} />}
+            {o.dot && <span className={cn("h-1.5 w-1.5 rounded-full", active ? "bg-current" : o.dot)} />}
             {o.label}
           </button>
         );

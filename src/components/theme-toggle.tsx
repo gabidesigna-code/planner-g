@@ -1,23 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { Moon, Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { storage } from "@/services/storage";
+import { useTheme } from "@/theme/theme-provider";
 
-export function toggleTheme() {
-  const next = !document.documentElement.classList.contains("dark");
-  document.documentElement.classList.toggle("dark", next);
-  storage.set("theme", next ? "dark" : "light");
-  return next;
-}
-
+/** Atalho claro/escuro. O modo "Sistema" e a paleta ficam em Aparência. */
 export function ThemeToggle() {
-  const [dark, setDark] = useState(false);
-  useEffect(() => setDark(document.documentElement.classList.contains("dark")), []);
-
+  const { dark, toggleMode } = useTheme();
   return (
-    <Button variant="ghost" size="icon" onClick={() => setDark(toggleTheme())} aria-label="Alternar tema" title="Alternar tema">
+    <Button variant="ghost" size="icon" onClick={toggleMode} aria-label="Alternar claro e escuro" title="Alternar claro e escuro">
       {dark ? <Sun className="h-[15px] w-[15px]" strokeWidth={1.7} /> : <Moon className="h-[15px] w-[15px]" strokeWidth={1.7} />}
     </Button>
   );

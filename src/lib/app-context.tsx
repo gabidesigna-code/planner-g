@@ -35,6 +35,8 @@ export interface AppApi {
   /** Formulário completo, direto no tipo escolhido */
   openForm: (kind: Kind, preset?: AddPreset) => void;
   navigate: (v: ViewId) => void;
+  /** Aparência: modo (claro/escuro/sistema) e paleta */
+  openAppearance: () => void;
 }
 
 export const AppCtx = createContext<AppApi | null>(null);

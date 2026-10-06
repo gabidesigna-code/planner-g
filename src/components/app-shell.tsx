@@ -13,7 +13,8 @@ import { HomeView } from "@/features/home/home-view";
 import { WeekView } from "@/features/week/week-view";
 import { CalendarView } from "@/features/calendar/calendar-view";
 import { TasksView } from "@/features/tasks/tasks-view";
-import { toggleTheme } from "./theme-toggle";
+import { AppearanceSheet } from "@/features/appearance/appearance-sheet";
+import { useTheme } from "@/theme/theme-provider";
 import { AppCtx, type AddPreset, type AppApi, type ViewId } from "@/lib/app-context";
 import { startOfDay } from "@/lib/dates";
 import { cn } from "@/lib/utils";
@@ -34,6 +35,8 @@ export function AppShell() {
   const [mobileNav, setMobileNav] = useState(false);
   const [menu, setMenu] = useState<{ open: boolean; preset: AddPreset }>({ open: false, preset: {} });
   const [form, setForm] = useState<{ open: boolean; kind: Kind; preset: AddPreset }>({ open: false, kind: "tarefa", preset: {} });
+  const [appearance, setAppearance] = useState(false);
+  const { toggleMode } = useTheme();
   const [now, setNow] = useState<Date | null>(null);
   const today = useMemo(() => startOfDay(), []);
   const gPending = useRef(false);
@@ -65,6 +68,7 @@ export function AppShell() {
   const closeMenu = useCallback(() => setMenu((m) => ({ ...m, open: false })), []);
   const openForm = useCallback((kind: Kind, preset: AddPreset = {}) => setForm({ open: true, kind, preset }), []);
   const closeForm = useCallback(() => setForm((f) => ({ ...f, open: false })), []);
+  const openAppearance = useCallback(() => { setMobileNav(false); setAppearance(true); }, []);
 
   // Atalhos de teclado
   useEffect(() => {
@@ -77,13 +81,14 @@ export function AppShell() {
       const el = e.target as HTMLElement;
       const typing = el.matches?.("input, textarea, select, [contenteditable]");
       if (e.key === "Escape") {
-        if (form.open) closeForm();
+        if (appearance) setAppearance(false);
+        else if (form.open) closeForm();
         else if (menu.open) closeMenu();
         else if (mobileNav) setMobileNav(false);
         else setSelectedId(null);
         return;
       }
-      if (typing || menu.open || form.open) return;
+      if (typing || menu.open || form.open || appearance) return;
       const k = e.key.toLowerCase();
       if (gPending.current) {
         gPending.current = false;
@@ -96,17 +101,17 @@ export function AppShell() {
       else if (k === "1") setFilter("tudo");
       else if (k === "2") setFilter("trabalho");
       else if (k === "3") setFilter("pessoal");
-      else if (k === "d" && e.shiftKey) toggleTheme();
+      else if (k === "d" && e.shiftKey) toggleMode();
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [menu.open, form.open, mobileNav, openAdd, closeMenu, closeForm, navigate, toggleCollapsed]);
+  }, [menu.open, form.open, appearance, mobileNav, openAdd, closeMenu, closeForm, navigate, toggleCollapsed, toggleMode]);
 
   if (!ready) return <div className="min-h-screen" aria-busy="true" />;
 
   const api: AppApi = {
     tasks, today, now, filter, setFilter, selectedId, recent, toggle, toggleSub, update, remove, reorder,
-    openTask: setSelectedId, openAdd, openForm, navigate,
+    openTask: setSelectedId, openAdd, openForm, navigate, openAppearance,
   };
 
   let content: React.ReactNode;
@@ -121,7 +126,7 @@ export function AppShell() {
     <AppCtx.Provider value={api}>
       <div className="min-h-screen">
         <aside className={cn("fixed inset-y-0 left-0 z-20 hidden bg-sidebar transition-[width] duration-200 ease-out lg:block", collapsed ? "w-14" : "w-52")}>
-          <Sidebar view={view} collapsed={collapsed} onNavigate={navigate} onToggleCollapsed={toggleCollapsed} />
+          <Sidebar view={view} collapsed={collapsed} onNavigate={navigate} onToggleCollapsed={toggleCollapsed} onOpenAppearance={openAppearance} />
         </aside>
 
         <div className="sticky top-0 z-20 flex items-center justify-between bg-background/85 px-3 py-2 backdrop-blur lg:hidden">
@@ -140,7 +145,7 @@ export function AppShell() {
               mobileNav ? "translate-x-0 shadow-pop" : "-translate-x-full",
             )}
           >
-            <Sidebar view={view} collapsed={false} touch onNavigate={navigate} onToggleCollapsed={toggleCollapsed} />
+            <Sidebar view={view} collapsed={false} touch onNavigate={navigate} onToggleCollapsed={toggleCollapsed} onOpenAppearance={openAppearance} />
           </aside>
         </div>
 
@@ -166,6 +171,7 @@ export function AppShell() {
           onToggleSidebar={toggleCollapsed}
         />
         <TaskForm open={form.open} kind={form.kind} preset={form.preset} today={today} now={now} onClose={closeForm} onSubmit={create} />
+        <AppearanceSheet open={appearance} onClose={() => setAppearance(false)} />
         <Toast toast={toast} onDismiss={dismiss} />
       </div>
     </AppCtx.Provider>
