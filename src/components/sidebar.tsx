@@ -35,7 +35,7 @@ export function Sidebar({ view, collapsed, touch, onNavigate, onToggleCollapsed 
   return (
     <div className="pb-safe flex h-full flex-col px-2.5 py-4">
       <div className={cn("mb-6 flex h-10 items-center text-foreground", collapsed ? "justify-center" : "px-2.5")}>
-        {collapsed ? <Monogram className="h-[34px] w-auto" /> : <Wordmark className="h-[34px] w-auto" />}
+        {collapsed ? <Monogram className="h-[34px] w-auto" /> : <Wordmark className="h-[24px] w-auto" />}
       </div>
 
       <nav aria-label="Principal" className="flex flex-col">

@@ -126,7 +126,7 @@ export function AppShell() {
 
         <div className="sticky top-0 z-20 flex items-center justify-between bg-background/85 px-3 py-2 backdrop-blur lg:hidden">
           <Button variant="ghost" size="icon" onClick={() => setMobileNav(true)} aria-label="Abrir menu" aria-expanded={mobileNav}><Menu className="h-[18px] w-[18px]" /></Button>
-          <Wordmark className="h-7 w-auto text-foreground" />
+          <Wordmark className="h-[22px] w-auto text-foreground" />
           <span className="w-10" />
         </div>
 
