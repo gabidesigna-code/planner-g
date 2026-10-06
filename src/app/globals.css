@@ -1,0 +1,92 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Paleta: névoa fria, grafite, oliva (trabalho), ameixa (pessoal). Valores HSL de cada hex. */
+@layer base {
+  :root {
+    /* Tokens centrais. Hex de referência ao lado de cada valor HSL. */
+    --background: 90 11% 96.5%;     /* #F6F7F5 fundo */
+    --surface: 0 0% 100%;           /* #FFFFFF superfícies */
+    --sidebar: 110 11% 89.6%;       /* #E2E7E1 sidebar */
+    --foreground: 150 8% 9.4%;      /* #161A18 texto */
+    --muted: 120 9% 89%;            /* trilhos, barras, selecionado */
+    --muted-foreground: 153 4% 43.7%; /* #6B7470 texto secundário */
+    --border: 130 8% 84.7%;         /* #D5DBD6 divisores */
+    --hover: 120 10% 92.5%;         /* hover */
+    --ring: 149 24% 17%;
+    --primary: 149 24% 17%;         /* #21362B botão principal */
+    --primary-foreground: 0 0% 100%;
+    --work: 128 13% 35.5%;          /* #4F6652 trabalho */
+    --work-soft: 120 15% 92%;       /* #E8EEE8 */
+    --personal: 335 31% 36.5%;      /* #7A4058 pessoal */
+    --personal-soft: 330 28% 93%;   /* #F2E8ED */
+    --cool: 204 10% 49%;            /* #71808A azul secundário */
+    --waiting: 33 38% 50%;          /* #B0844F aguardando */
+    --waiting-soft: 33 45% 92%;
+    --urgent: 12 46% 49%;           /* #B65A43 atrasado */
+    --urgent-soft: 12 50% 93%;
+    --done: 126 13% 48%;            /* #6A8A6D concluído */
+    --done-soft: 126 16% 91%;
+    --shadow: 149 30% 10%;
+  }
+  .dark {
+    --background: 150 12% 6.5%;
+    --surface: 150 10% 9.5%;
+    --sidebar: 150 13% 5%;
+    --foreground: 110 12% 92%;
+    --muted: 150 8% 17%;
+    --muted-foreground: 140 6% 62%;
+    --border: 150 8% 19%;
+    --hover: 150 9% 14%;
+    --ring: 140 22% 80%;
+    --primary: 140 24% 80%;
+    --primary-foreground: 150 20% 8%;
+    --work: 128 26% 64%;
+    --work-soft: 128 14% 14%;
+    --personal: 335 40% 73%;
+    --personal-soft: 335 16% 16%;
+    --cool: 204 22% 66%;
+    --waiting: 36 50% 62%;
+    --waiting-soft: 36 20% 15%;
+    --urgent: 12 62% 64%;
+    --urgent-soft: 12 24% 17%;
+    --done: 126 26% 62%;
+    --done-soft: 126 12% 15%;
+    --shadow: 0 0% 0%;
+  }
+  * { @apply border-border; }
+  html { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; -webkit-text-size-adjust: 100%; }
+  body { @apply bg-background font-sans text-foreground; overflow-x: clip; -webkit-tap-highlight-color: transparent; }
+  ::selection { background: hsl(var(--work) / .25); }
+  button, [role="button"], [role="tab"], select, summary { cursor: pointer; }
+  button:disabled { cursor: not-allowed; }
+  :focus-visible { @apply outline-none ring-2 ring-foreground/25 ring-offset-2 ring-offset-background; }
+  input:focus-visible, textarea:focus-visible, select:focus-visible { @apply ring-0 ring-offset-0; }
+  input[type="date"], input[type="time"] { color-scheme: light; }
+  .dark input[type="date"], .dark input[type="time"] { color-scheme: dark; }
+}
+
+@layer components {
+  .kbd {
+    @apply inline-grid h-[18px] min-w-[18px] place-items-center rounded-[5px] border border-border bg-surface px-1 font-mono text-[10px] font-medium leading-none text-muted-foreground;
+  }
+  .label-mono {
+    @apply font-mono text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground;
+  }
+}
+
+@layer utilities {
+  .scroll-thin::-webkit-scrollbar { width: 8px; }
+  .scroll-thin::-webkit-scrollbar-thumb { background: hsl(var(--border)); border-radius: 8px; }
+  .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
+}
+
+/* Mobile: campos com 16px evitam o zoom automático do iOS ao focar */
+@media (max-width: 639px) {
+  input:not(.keep-size), textarea:not(.keep-size), select:not(.keep-size) { font-size: 16px !important; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}

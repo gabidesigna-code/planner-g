@@ -1,0 +1,17 @@
+node_modules
+.next
+next-env.d.ts
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Vercel
+.vercel
+
+# Logs
+*.log
+
+# TypeScript cache
+*.tsbuildinfo
