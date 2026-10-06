@@ -5,6 +5,7 @@ import { Menu, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sidebar } from "./sidebar";
 import { Toast } from "./toast";
+import { Wordmark } from "./brand/logo";
 import { SidePanel } from "@/features/task-details/side-panel";
 import { CommandMenu } from "@/features/add/command-menu";
 import { TaskForm } from "@/features/task-form/task-form";
@@ -125,7 +126,7 @@ export function AppShell() {
 
         <div className="sticky top-0 z-20 flex items-center justify-between bg-background/85 px-3 py-2 backdrop-blur lg:hidden">
           <Button variant="ghost" size="icon" onClick={() => setMobileNav(true)} aria-label="Abrir menu" aria-expanded={mobileNav}><Menu className="h-[18px] w-[18px]" /></Button>
-          <span className="text-[17px] font-semibold tracking-[-0.04em]">g<span className="text-work">.</span></span>
+          <Wordmark className="h-7 w-auto text-foreground" />
           <span className="w-10" />
         </div>
 

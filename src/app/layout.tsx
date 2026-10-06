@@ -8,7 +8,7 @@ const mono = Geist_Mono({ subsets: ["latin"], variable: "--font-mono" });
 export const viewport: Viewport = { width: "device-width", initialScale: 1, viewportFit: "cover" };
 
 export const metadata: Metadata = {
-  title: "g.",
+  title: "gabi",
   description: "Agenda pessoal.",
 };
 

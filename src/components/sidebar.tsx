@@ -3,6 +3,7 @@
 import { CalendarDays, Columns3, Check, ListChecks, PanelLeftClose, PanelLeftOpen, Sun, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "./theme-toggle";
+import { Monogram, Wordmark } from "./brand/logo";
 import type { ViewId } from "@/lib/app-context";
 
 interface Item { id: ViewId; label: string; icon?: LucideIcon; dot?: string; key: string }
@@ -33,10 +34,8 @@ interface Props {
 export function Sidebar({ view, collapsed, touch, onNavigate, onToggleCollapsed }: Props) {
   return (
     <div className="pb-safe flex h-full flex-col px-2.5 py-4">
-      <div className={cn("mb-6 flex h-8 items-center", collapsed ? "justify-center" : "px-2.5")}>
-        <span className="text-[19px] font-semibold tracking-[-0.04em]">
-          g<span className="text-work">.</span>
-        </span>
+      <div className={cn("mb-6 flex h-10 items-center text-foreground", collapsed ? "justify-center" : "px-2.5")}>
+        {collapsed ? <Monogram className="h-[34px] w-auto" /> : <Wordmark className="h-[34px] w-auto" />}
       </div>
 
       <nav aria-label="Principal" className="flex flex-col">
