@@ -8,7 +8,6 @@ import { TaskFilterBar } from "./task-filter-bar";
 import { DEFAULT_FILTERS, applyFilters, isFiltering, type TaskFilters } from "./task-filters";
 import { byTime, diffDays, longDay } from "@/lib/dates";
 import { isOpen, matches, useApp } from "@/lib/app-context";
-import { allCategories, listCategories } from "@/services/category-service";
 import type { Task } from "@/types";
 
 export type TasksMode = "tarefas" | "trabalho" | "pessoal" | "concluidos";
@@ -35,7 +34,7 @@ function Group({ label, tasks }: { label: string; tasks: Task[] }) {
 }
 
 export function TasksView({ mode }: { mode: TasksMode }) {
-  const { tasks, today, filter, recent } = useApp();
+  const { tasks, today, filter, recent, categoryNames, allCategoryNames } = useApp();
   const [filters, setFilters] = useState<TaskFilters>({ ...DEFAULT_FILTERS });
   const doneMode = mode === "concluidos";
 
@@ -43,7 +42,7 @@ export function TasksView({ mode }: { mode: TasksMode }) {
     () => tasks.filter((t) => (mode === "trabalho" || mode === "pessoal" ? t.context === mode : matches(t, filter))),
     [tasks, mode, filter],
   );
-  const categories = mode === "trabalho" || mode === "pessoal" ? listCategories(mode) : filter === "tudo" ? allCategories() : listCategories(filter);
+  const categories = mode === "trabalho" || mode === "pessoal" ? categoryNames(mode) : filter === "tudo" ? allCategoryNames() : categoryNames(filter);
   const clients = useMemo(() => [...new Set(scoped.map((t) => t.client).filter((c): c is string => !!c))].sort(), [scoped]);
 
   // Em Concluídos o status é fixo; nas demais o padrão é "em aberto"

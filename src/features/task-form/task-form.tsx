@@ -6,9 +6,8 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { CTX } from "@/lib/context";
 import { fromIso, fromMin, isoDate, toMin } from "@/lib/dates";
-import type { AddPreset } from "@/lib/app-context";
+import { useApp, type AddPreset } from "@/lib/app-context";
 import { useScrollLock } from "@/hooks/use-scroll-lock";
-import { listCategories } from "@/services/category-service";
 import {
   KIND_LABEL, PRIORITY_LABEL, RECURRENCE_LABEL, STATUS_LABEL,
   type Context, type Kind, type Priority, type Recurrence, type Status, type Task,
@@ -70,6 +69,7 @@ export function TaskForm(props: Props) {
 
 function FormBody({ kind: initialKind, preset, today, now, onClose, onSubmit }: Props) {
   useScrollLock(true);
+  const { categoryNames } = useApp();
   const titleRef = useRef<HTMLInputElement>(null);
 
   const defaultStart = () => {
@@ -80,7 +80,7 @@ function FormBody({ kind: initialKind, preset, today, now, onClose, onSubmit }: 
   const [kind, setKind] = useState<Kind>(initialKind);
   const [title, setTitle] = useState(preset.title ?? "");
   const [context, setContext] = useState<Context>(preset.context ?? "trabalho");
-  const [category, setCategory] = useState(() => listCategories(preset.context ?? "trabalho")[0]);
+  const [category, setCategory] = useState(() => categoryNames(preset.context ?? "trabalho")[0]);
   const [date, setDate] = useState(isoDate(preset.due ?? today));
   const [endDate, setEndDate] = useState("");
   const [time, setTime] = useState(preset.time ?? (initialKind === "compromisso" ? defaultStart() : ""));
@@ -105,11 +105,11 @@ function FormBody({ kind: initialKind, preset, today, now, onClose, onSubmit }: 
 
   const hasEnd = kind === "compromisso" || kind === "evento";
   const ctx = CTX[context];
-  const categories = listCategories(context);
+  const categories = categoryNames(context);
 
   function changeContext(c: Context) {
     setContext(c);
-    if (!listCategories(c).includes(category)) setCategory(listCategories(c)[0]);
+    if (!categoryNames(c).includes(category)) setCategory(categoryNames(c)[0]);
   }
 
   function changeKind(k: Kind) {

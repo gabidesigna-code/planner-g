@@ -12,6 +12,7 @@ export function Toast({ toast, onDismiss }: { toast: ToastState | null; onDismis
       aria-live="polite"
       className="animate-menuIn fixed bottom-[calc(env(safe-area-inset-bottom)+5.75rem)] left-1/2 z-[60] flex max-w-[calc(100vw-2rem)] -translate-x-1/2 items-center gap-3 rounded-lg bg-foreground py-2 pl-4 pr-2 text-[13px] font-medium text-background shadow-pop lg:bottom-6"
     >
+      {toast.tone === "error" && <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-urgent" aria-hidden />}
       <span className="min-w-0 truncate">{toast.message}</span>
       {toast.undo && (
         <button

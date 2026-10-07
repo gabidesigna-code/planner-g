@@ -1,18 +1,14 @@
-import type { Context } from "@/types";
+import { NO_CATEGORY, type Category, type Context } from "@/types";
 
 /**
- * Categorias padrão. Ficam atrás desta função para que a edição futura
- * (criar/renomear categorias, persistir no Supabase) não mexa nos componentes.
+ * Nomes de categoria para as listas da interface: as do usuário (vindas do banco)
+ * e, por último, "Outros" (item sem categoria). Criar/editar categorias entra depois,
+ * sem mexer nos componentes: eles só consomem estas funções.
  */
-const DEFAULT_CATEGORIES: Record<Context, string[]> = {
-  trabalho: ["Fiscal", "Financeiro", "Clientes", "Reuniões", "Administrativo", "Outros"],
-  pessoal: ["Casa", "Compras", "Saúde", "Família", "Financeiro pessoal", "Lazer", "Outros"],
-};
-
-export function listCategories(context: Context): string[] {
-  return DEFAULT_CATEGORIES[context];
+export function categoryNames(categories: Category[], context: Context): string[] {
+  return [...categories.filter((c) => c.context === context).map((c) => c.name), NO_CATEGORY];
 }
 
-export function allCategories(): string[] {
-  return [...new Set([...DEFAULT_CATEGORIES.trabalho, ...DEFAULT_CATEGORIES.pessoal])];
+export function allCategoryNames(categories: Category[]): string[] {
+  return [...new Set([...categories.map((c) => c.name), NO_CATEGORY])];
 }

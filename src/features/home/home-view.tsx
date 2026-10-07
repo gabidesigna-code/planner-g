@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type DragEvent } from "react";
+import { useState, type DragEvent } from "react";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ContextSwitch } from "@/components/context-switch";
@@ -12,7 +12,6 @@ import { addDays, byTime, dayTag, diffDays, greeting, monAbbr, pad2, weekdayName
 import { draggedId, isTaskDrag } from "@/lib/dnd";
 import { isOpen, matches, useApp } from "@/lib/app-context";
 import { canBeOverdue, occursOn } from "@/lib/task-utils";
-import { storage } from "@/services/storage";
 import type { Task } from "@/types";
 
 type Peek = "aguardando" | "concluidas" | null;
@@ -28,7 +27,8 @@ function SectionLabel({ children, right }: { children: React.ReactNode; right?: 
 }
 
 export function HomeView() {
-  const { tasks, today, now, filter, recent, update, openAdd } = useApp();
+  const { tasks, today, now, filter, recent, update, openAdd, ownerName } = useApp();
+  const firstName = ownerName.trim().split(" ")[0];
   const [peek, setPeek] = useState<Peek>(null);
   const [expanded, setExpanded] = useState<number | null>(null);
   const [dropDay, setDropDay] = useState<number | null>(null);
@@ -72,7 +72,7 @@ export function HomeView() {
             {pad2(today.getDate())}{" "}
             <span className="text-work/55">{monAbbr(today).toUpperCase()}</span>
           </h1>
-          <p className="mt-4 min-h-[20px] text-[14px] text-muted-foreground">{greeting(now)}, Gabriela.</p>
+          <p className="mt-4 min-h-[20px] text-[14px] text-muted-foreground">{greeting(now)}{firstName ? `, ${firstName}` : ""}.</p>
         </div>
         <Button onClick={() => openAdd()} className="w-full shrink-0 sm:mt-1 sm:w-auto">
           <Plus className="h-4 w-4" strokeWidth={2} /> Adicionar <span className="kbd ml-1 hidden border-background/20 bg-background/10 text-background/70 sm:grid">N</span>
@@ -196,19 +196,14 @@ export function HomeView() {
 }
 
 function QuickNote() {
-  const [text, setText] = useState("");
-  useEffect(() => {
-    setText(storage.get("quick-note") ?? "");
-  }, []);
+  const { note } = useApp();
   return (
     <section className="mt-10 sm:mt-12">
       <SectionLabel>Nota rápida</SectionLabel>
       <textarea
-        value={text}
-        onChange={(e) => {
-          setText(e.target.value);
-          storage.set("quick-note", e.target.value);
-        }}
+        value={note.text}
+        onChange={(e) => note.set(e.target.value)}
+        disabled={!note.ready}
         placeholder="Anote qualquer coisa…"
         rows={3}
         className="scroll-thin w-full resize-none bg-transparent text-[14px] leading-relaxed placeholder:text-muted-foreground/50 focus:outline-none"

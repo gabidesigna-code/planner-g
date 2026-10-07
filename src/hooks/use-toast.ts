@@ -6,6 +6,7 @@ export interface ToastState {
   id: number;
   message: string;
   undo?: () => void;
+  tone?: "error";
 }
 
 export type Notify = (message: string, undo?: () => void) => void;
@@ -26,5 +27,12 @@ export function useToast() {
     timer.current = window.setTimeout(() => setToast(null), undo ? 6000 : 2200);
   }, []);
 
-  return { toast, notify, dismiss };
+  /** Erro discreto (a ação já foi desfeita); some sozinho. */
+  const notifyError = useCallback((message: string) => {
+    window.clearTimeout(timer.current);
+    setToast({ id: Date.now(), message, tone: "error" });
+    timer.current = window.setTimeout(() => setToast(null), 5000);
+  }, []);
+
+  return { toast, notify, notifyError, dismiss };
 }

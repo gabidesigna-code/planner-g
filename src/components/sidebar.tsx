@@ -68,15 +68,20 @@ export function Sidebar({ view, collapsed, touch, onNavigate, onToggleCollapsed,
         ))}
       </nav>
 
-      <div className={cn("mt-auto flex gap-1", collapsed ? "flex-col items-center" : "items-center justify-between px-1")}>
-        {touch ? (
-          <button
-            onClick={onOpenAppearance}
-            className="flex h-11 items-center gap-2.5 rounded-lg px-2.5 text-[15px] text-foreground/80 transition-colors hover:bg-surface/70 hover:text-foreground"
-          >
-            <Palette className="h-[16px] w-[16px]" strokeWidth={1.7} /> Aparência
-          </button>
-        ) : (
+      {touch ? (
+        <div className="mt-auto flex flex-col gap-0.5">
+          <div className="flex items-center justify-between">
+            <button
+              onClick={onOpenAppearance}
+              className="flex h-11 items-center gap-2.5 rounded-lg px-2.5 text-[15px] text-foreground/80 transition-colors hover:bg-surface/70 hover:text-foreground"
+            >
+              <Palette className="h-[16px] w-[16px]" strokeWidth={1.7} /> Aparência
+            </button>
+            <ThemeToggle />
+          </div>
+        </div>
+      ) : (
+        <div className={cn("mt-auto flex gap-1", collapsed ? "flex-col items-center" : "items-center justify-between px-1")}>
           <button
             onClick={onToggleCollapsed}
             aria-label={collapsed ? "Expandir menu" : "Recolher menu"}
@@ -85,9 +90,7 @@ export function Sidebar({ view, collapsed, touch, onNavigate, onToggleCollapsed,
           >
             {collapsed ? <PanelLeftOpen className="h-[15px] w-[15px]" strokeWidth={1.7} /> : <PanelLeftClose className="h-[15px] w-[15px]" strokeWidth={1.7} />}
           </button>
-        )}
-        <div className={cn("flex gap-0.5", collapsed && "flex-col items-center")}>
-          {!touch && (
+          <div className={cn("flex gap-0.5", collapsed && "flex-col items-center")}>
             <button
               onClick={onOpenAppearance}
               aria-label="Aparência e paleta"
@@ -96,10 +99,10 @@ export function Sidebar({ view, collapsed, touch, onNavigate, onToggleCollapsed,
             >
               <Palette className="h-[15px] w-[15px]" strokeWidth={1.7} />
             </button>
-          )}
-          <ThemeToggle />
+            <ThemeToggle />
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

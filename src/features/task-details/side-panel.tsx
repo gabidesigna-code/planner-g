@@ -7,7 +7,6 @@ import { cn } from "@/lib/utils";
 import { CTX } from "@/lib/context";
 import { addDays, fromIso, isoDate, weekStart } from "@/lib/dates";
 import { useScrollLock } from "@/hooks/use-scroll-lock";
-import { listCategories } from "@/services/category-service";
 import { useApp } from "@/lib/app-context";
 import {
   KIND_LABEL, PRIORITY_LABEL, RECURRENCE_LABEL, STATUS_LABEL,
@@ -39,7 +38,7 @@ export function SidePanel() {
 }
 
 function PanelBody({ task }: { task: Task }) {
-  const { update, remove, toggle, toggleSub, openTask, today } = useApp();
+  const { update, remove, toggle, toggleSub, openTask, today, categoryNames } = useApp();
   useScrollLock(true, "(max-width: 639px)");
   const [newSub, setNewSub] = useState("");
   const ctx = CTX[task.context];
@@ -148,7 +147,7 @@ function PanelBody({ task }: { task: Task }) {
             {(["trabalho", "pessoal"] as Context[]).map((c) => (
               <button
                 key={c}
-                onClick={() => set({ context: c, category: listCategories(c).includes(task.category) ? task.category : "Outros", client: c === "pessoal" ? undefined : task.client })}
+                onClick={() => set({ context: c, category: categoryNames(c).includes(task.category) ? task.category : "Outros", client: c === "pessoal" ? undefined : task.client })}
                 className={cn(
                   "flex h-10 items-center gap-2 rounded-md px-3 text-[13.5px] sm:h-8 sm:px-2.5 transition-colors",
                   task.context === c ? "bg-hover font-medium" : "text-muted-foreground hover:bg-hover",
@@ -161,7 +160,7 @@ function PanelBody({ task }: { task: Task }) {
         </Row>
         <Row label="Categoria">
           <select value={task.category} onChange={(e) => set({ category: e.target.value })} className={prop}>
-            {[...new Set([task.category, ...listCategories(task.context)])].map((c) => <option key={c}>{c}</option>)}
+            {[...new Set([task.category, ...categoryNames(task.context)])].map((c) => <option key={c}>{c}</option>)}
           </select>
         </Row>
         {task.context === "trabalho" && (

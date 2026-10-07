@@ -40,6 +40,7 @@ const config: Config = {
         menuIn: { from: { opacity: "0", transform: "translateY(-6px) scale(.98)" }, to: { opacity: "1", transform: "none" } },
         pop: { "0%": { transform: "scale(.82)" }, "55%": { transform: "scale(1.12)" }, "100%": { transform: "scale(1)" } },
         sheetUp: { from: { opacity: "0.6", transform: "translateY(32px)" }, to: { opacity: "1", transform: "none" } },
+        sync: { "0%": { transform: "translateX(-100%)" }, "100%": { transform: "translateX(300%)" } },
         draw: { to: { strokeDashoffset: "0" } },
       },
       animation: {
@@ -49,6 +50,7 @@ const config: Config = {
         menuIn: "menuIn .16s cubic-bezier(.2,.8,.2,1) both",
         pop: "pop .28s cubic-bezier(.3,1.4,.5,1)",
         sheetUp: "sheetUp .26s cubic-bezier(.2,.8,.2,1) both",
+        sync: "sync 1.1s ease-in-out infinite",
         draw: "draw .22s .05s ease-out forwards",
       },
     },

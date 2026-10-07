@@ -5,6 +5,8 @@ import { Menu, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sidebar } from "./sidebar";
 import { Toast } from "./toast";
+import { SyncBar } from "./sync-bar";
+import { LoadErrorScreen, LoadingScreen } from "./loading-screen";
 import { Wordmark } from "./brand/logo";
 import { SidePanel } from "@/features/task-details/side-panel";
 import { CommandMenu } from "@/features/add/command-menu";
@@ -20,14 +22,19 @@ import { startOfDay } from "@/lib/dates";
 import { cn } from "@/lib/utils";
 import { useTasks } from "@/hooks/use-tasks";
 import { useToast } from "@/hooks/use-toast";
+import { useQuickNote } from "@/hooks/use-quick-note";
+import { httpAgendaRepository } from "@/services/agenda-repository";
+import { allCategoryNames, categoryNames } from "@/services/category-service";
 import { storage } from "@/services/storage";
 import type { ContextFilter, Kind } from "@/types";
 
 const GO: Record<string, ViewId> = { h: "hoje", s: "semana", c: "calendario", t: "tarefas", w: "trabalho", p: "pessoal", d: "concluidos" };
 
 export function AppShell() {
-  const { toast, notify, dismiss } = useToast();
-  const { tasks, ready, recent, toggle, toggleSub, update, remove, create, reorder } = useTasks(notify);
+  const { toast, notify, notifyError, dismiss } = useToast();
+  const { tasks, categories, note: serverNote, ownerName, ready, loadError, reload, saving, recent, toggle, toggleSub, update, remove, create, reorder } =
+    useTasks({ repo: httpAgendaRepository, notify, notifyError });
+  const note = useQuickNote({ serverNote, ready, notifyError });
   const [view, setView] = useState<ViewId>("hoje");
   const [filter, setFilter] = useState<ContextFilter>("tudo");
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -107,11 +114,15 @@ export function AppShell() {
     return () => window.removeEventListener("keydown", onKey);
   }, [menu.open, form.open, appearance, mobileNav, openAdd, closeMenu, closeForm, navigate, toggleCollapsed, toggleMode]);
 
-  if (!ready) return <div className="min-h-screen" aria-busy="true" />;
+  if (loadError && !ready) return <LoadErrorScreen message={loadError} onRetry={reload} />;
+  if (!ready) return <LoadingScreen />;
 
   const api: AppApi = {
-    tasks, today, now, filter, setFilter, selectedId, recent, toggle, toggleSub, update, remove, reorder,
+    ownerName, tasks, today, now, filter, setFilter, selectedId, recent, toggle, toggleSub, update, remove, reorder,
     openTask: setSelectedId, openAdd, openForm, navigate, openAppearance,
+    categoryNames: (ctx) => categoryNames(categories, ctx),
+    allCategoryNames: () => allCategoryNames(categories),
+    note: { text: note.text, set: note.setText, ready: note.ready },
   };
 
   let content: React.ReactNode;
@@ -172,6 +183,7 @@ export function AppShell() {
         />
         <TaskForm open={form.open} kind={form.kind} preset={form.preset} today={today} now={now} onClose={closeForm} onSubmit={create} />
         <AppearanceSheet open={appearance} onClose={() => setAppearance(false)} />
+        <SyncBar saving={saving} />
         <Toast toast={toast} onDismiss={dismiss} />
       </div>
     </AppCtx.Provider>

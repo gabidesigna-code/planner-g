@@ -38,7 +38,21 @@ export interface Task {
   recurrence?: Recurrence;
   subtasks?: Subtask[];
   doneAt?: Date;
+  /** Ordem na lista (menor = mais acima). Persistida no banco. */
+  position?: number;
 }
+
+/** Categoria do usuário (as padrão são criadas no cadastro). */
+export interface Category {
+  id: string;
+  name: string;
+  context: Context;
+  color?: string;
+  icon?: string;
+}
+
+/** Item sem categoria própria: aparece como "Outros" na interface. */
+export const NO_CATEGORY = "Outros";
 
 export const STATUS_LABEL: Record<Status, string> = {
   "a-fazer": "A fazer",

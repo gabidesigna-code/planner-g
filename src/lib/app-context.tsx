@@ -15,6 +15,8 @@ export interface AddPreset {
 }
 
 export interface AppApi {
+  /** Nome usado na saudação da Home (vem das preferências) */
+  ownerName: string;
   tasks: Task[];
   today: Date;
   /** Hora atual (só no cliente, depois da hidratação) */
@@ -37,6 +39,11 @@ export interface AppApi {
   navigate: (v: ViewId) => void;
   /** Aparência: modo (claro/escuro/sistema) e paleta */
   openAppearance: () => void;
+  /** Categorias do usuário para as listas (as dele + "Outros") */
+  categoryNames: (context: Context) => string[];
+  allCategoryNames: () => string[];
+  /** Nota rápida da Home (guardada no banco) */
+  note: { text: string; set: (v: string) => void; ready: boolean };
 }
 
 export const AppCtx = createContext<AppApi | null>(null);
