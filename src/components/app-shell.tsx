@@ -16,6 +16,7 @@ import { HomeView } from "@/features/home/home-view";
 import { WeekView } from "@/features/week/week-view";
 import { CalendarView } from "@/features/calendar/calendar-view";
 import { TasksView } from "@/features/tasks/tasks-view";
+import { OriView } from "@/features/ori/ori-view";
 import { AppearanceSheet } from "@/features/appearance/appearance-sheet";
 import { useTheme } from "@/theme/theme-provider";
 import { AppCtx, type AddPreset, type AppApi, type ViewId } from "@/lib/app-context";
@@ -29,7 +30,7 @@ import { allCategoryNames, categoryNames } from "@/services/category-service";
 import { storage } from "@/services/storage";
 import type { ContextFilter, Kind } from "@/types";
 
-const GO: Record<string, ViewId> = { h: "hoje", s: "semana", c: "calendario", t: "tarefas", w: "trabalho", p: "pessoal", d: "concluidos" };
+const GO: Record<string, ViewId> = { h: "hoje", s: "semana", c: "calendario", t: "tarefas", o: "ori", w: "trabalho", p: "pessoal", d: "concluidos" };
 
 export function AppShell() {
   const { toast, notify, notifyError, dismiss } = useToast();
@@ -136,6 +137,7 @@ export function AppShell() {
     case "hoje": content = <HomeView />; break;
     case "semana": content = <WeekView />; break;
     case "calendario": content = <CalendarView />; break;
+    case "ori": content = <OriView onCreate={create} />; break;
     default: content = <TasksView key={view} mode={view} />;
   }
 
@@ -168,15 +170,15 @@ export function AppShell() {
 
         <main className={cn("transition-[padding] duration-200 ease-out", collapsed ? "lg:pl-14" : "lg:pl-[15.5rem] xl:pl-[16rem] 2xl:pl-[14.75rem]")}>{content}</main>
 
-        {/* Botão flutuante: adicionar ao alcance do polegar (só no celular) */}
-        <button
+        {/* Botão flutuante: adicionar ao alcance do polegar (só no celular; na tela da ori o campo de mensagem ocupa esse lugar) */}
+        {view !== "ori" && <button
           onClick={() => openAdd()}
           aria-label="Adicionar"
           className="fixed right-4 z-30 grid h-14 w-14 place-items-center rounded-full bg-primary text-primary-foreground shadow-btn transition-transform active:scale-95 lg:hidden"
           style={{ bottom: "calc(env(safe-area-inset-bottom) + 1.25rem)" }}
         >
           <Plus className="h-6 w-6" strokeWidth={1.8} />
-        </button>
+        </button>}
 
         <SidePanel />
         <CommandMenu

@@ -3,7 +3,7 @@
 import { createContext, useContext } from "react";
 import type { Context, ContextFilter, Kind, Task } from "@/types";
 
-export type ViewId = "hoje" | "semana" | "calendario" | "tarefas" | "trabalho" | "pessoal" | "concluidos";
+export type ViewId = "hoje" | "semana" | "calendario" | "tarefas" | "ori" | "trabalho" | "pessoal" | "concluidos";
 
 /** Valores iniciais ao abrir o menu "Adicionar" ou o formulário. */
 export interface AddPreset {

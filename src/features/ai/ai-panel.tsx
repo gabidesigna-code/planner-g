@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Pencil, Repeat, Sparkles } from "lucide-react";
+import { Pencil, Repeat } from "lucide-react";
+import { OriMonogram } from "@/components/brand/logo";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useScrollLock } from "@/hooks/use-scroll-lock";
@@ -131,12 +132,12 @@ export function AiPanel({ open, initialText, onClose, onCreate }: {
       <div className="animate-fade absolute inset-0 bg-foreground/25 backdrop-blur-[0.125rem]" onClick={onClose} />
       <div
         role="dialog"
-        aria-label="Organizar com IA"
+        aria-label="Organizar com ori"
         onKeyDown={(e) => { if (e.key === "Escape") { e.stopPropagation(); onClose(); } }}
         className="animate-sheetUp sm:animate-menuIn pb-safe relative flex max-h-[88dvh] w-full flex-col overflow-hidden rounded-t-2xl bg-surface shadow-pop sm:max-h-[78dvh] sm:max-w-[40rem] sm:rounded-xl"
       >
         <div className="flex items-center gap-2 px-4 pt-4 sm:px-5">
-          <Sparkles className="h-4 w-4 text-work" strokeWidth={1.8} />
+          <OriMonogram tile className="h-7 w-7 shrink-0" />
           <span className="label-mono">{step === "preview" ? "Entendi assim" : "O que você precisa organizar?"}</span>
         </div>
 
@@ -171,10 +172,10 @@ export function AiPanel({ open, initialText, onClose, onCreate }: {
             )}
             <div className="mt-4 flex items-center gap-3">
               <span className="font-mono text-[0.6875rem] text-muted-foreground/70">
-                {step === "loading" ? "Organizando…" : "Nada é salvo antes da sua confirmação."}
+                {step === "loading" ? "Organizando…" : "A ori só salva depois da sua confirmação."}
               </span>
               <Button onClick={() => void interpret(text)} disabled={!text.trim() || step === "loading"} className="ml-auto">
-                <Sparkles className="h-4 w-4" strokeWidth={1.8} /> {step === "loading" ? "Organizando" : "Organizar"}
+                {step === "loading" ? "Organizando" : "Organizar"}
               </Button>
             </div>
           </div>

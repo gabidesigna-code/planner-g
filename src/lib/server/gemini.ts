@@ -43,7 +43,7 @@ function lastBusinessDay(year: number, month: number): string {
   return iso(d);
 }
 
-function calendarContext(today: Date): string {
+export function calendarContext(today: Date): string {
   const lines: string[] = [];
   for (let i = 0; i < 21; i++) {
     const d = new Date(today.getTime() + i * 86_400_000);
@@ -99,7 +99,7 @@ Regras:
 }
 
 /** Schema para o Gemini forçar a resposta estruturada (subconjunto OpenAPI). */
-const RESPONSE_SCHEMA = {
+export const RESPONSE_SCHEMA = {
   type: "OBJECT",
   properties: {
     items: {
@@ -133,7 +133,7 @@ const fold = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCa
 /** Valida e normaliza a resposta do modelo. Itens inválidos são descartados, nunca "consertados" às cegas. */
 export function normalizeItems(raw: unknown, categories: Cat[]): ProposedItem[] {
   const env = aiEnvelopeSchema.safeParse(raw);
-  if (!env.success) throw new AiError("A IA devolveu uma resposta fora do formato esperado. Tente reescrever a frase.", 502);
+  if (!env.success) throw new AiError("A ori devolveu uma resposta fora do formato esperado. Tente reescrever a frase.", 502);
 
   const out: ProposedItem[] = [];
   for (const candidate of env.data.items) {
@@ -162,27 +162,41 @@ export function normalizeItems(raw: unknown, categories: Cat[]): ProposedItem[] 
 
 // ------------------------------------------------------------------ chamada
 
-export async function organizeWithGemini(text: string, categories: Cat[]): Promise<ProposedItem[]> {
+/** Pedido ao Gemini: instrução do sistema, conversa, schema da resposta estruturada. */
+export interface GeminiRequest {
+  system: string;
+  contents: { role: "user" | "model"; parts: { text: string }[] }[];
+  schema: object;
+  temperature?: number;
+  maxOutputTokens?: number;
+}
+
+/**
+ * ÚNICA porta de saída para o Gemini (usada por "Organizar com ori" e pelo chat da ori):
+ * mesma chave, mesmo modelo configurável, timeout, nova tentativa em 503 e erros traduzidos.
+ * Devolve o JSON já convertido (ainda NÃO validado: quem chama valida com Zod).
+ */
+export async function geminiGenerate(req: GeminiRequest): Promise<unknown> {
   const key = process.env.GEMINI_API_KEY?.trim();
-  if (!key) throw new AiError("A IA ainda não está configurada: falta a GEMINI_API_KEY no servidor.", 503);
+  if (!key) throw new AiError("A ori ainda não está configurada: falta a GEMINI_API_KEY no servidor.", 503);
   const model = process.env.GEMINI_MODEL?.trim() || DEFAULT_GEMINI_MODEL;
 
   const call = () => fetch(`${API_BASE()}/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
-      method: "POST",
-      headers: { "content-type": "application/json", "x-goog-api-key": key },
-      signal: AbortSignal.timeout(TIMEOUT_MS),
-      cache: "no-store",
-      body: JSON.stringify({
-        systemInstruction: { parts: [{ text: systemPrompt(todayInSaoPaulo(), categories) }] },
-        contents: [{ role: "user", parts: [{ text }] }],
-        generationConfig: {
-          responseMimeType: "application/json",
-          responseSchema: RESPONSE_SCHEMA,
-          temperature: 0.1,
-          maxOutputTokens: 2048,
-        },
-      }),
-    });
+    method: "POST",
+    headers: { "content-type": "application/json", "x-goog-api-key": key },
+    signal: AbortSignal.timeout(TIMEOUT_MS),
+    cache: "no-store",
+    body: JSON.stringify({
+      systemInstruction: { parts: [{ text: req.system }] },
+      contents: req.contents,
+      generationConfig: {
+        responseMimeType: "application/json",
+        responseSchema: req.schema,
+        temperature: req.temperature ?? 0.1,
+        maxOutputTokens: req.maxOutputTokens ?? 2048,
+      },
+    }),
+  });
 
   let res: Response;
   try {
@@ -190,7 +204,7 @@ export async function organizeWithGemini(text: string, categories: Cat[]): Promi
     if (RETRY_STATUSES.includes(res.status)) res = await call();
   } catch (e) {
     const timeout = e instanceof DOMException && e.name === "TimeoutError";
-    throw new AiError(timeout ? "A IA demorou demais para responder. Tente de novo." : "Não consegui falar com a IA agora.", 504);
+    throw new AiError(timeout ? "A ori demorou demais para responder. Tente de novo." : "Não consegui falar com a ori agora.", 504);
   }
 
   if (!res.ok) {
@@ -203,13 +217,19 @@ export async function organizeWithGemini(text: string, categories: Cat[]): Promi
 
   const body = (await res.json().catch(() => null)) as { candidates?: { content?: { parts?: { text?: string }[] } }[] } | null;
   const raw = body?.candidates?.[0]?.content?.parts?.map((p) => p.text ?? "").join("").trim();
-  if (!raw) throw new AiError("A IA não devolveu nada para esse texto. Tente reescrever.", 502);
-
-  let parsed: unknown;
+  if (!raw) throw new AiError("A ori não devolveu nada. Tente de novo.", 502);
   try {
-    parsed = JSON.parse(raw);
+    return JSON.parse(raw);
   } catch {
-    throw new AiError("A IA devolveu uma resposta ilegível. Tente de novo.", 502);
+    throw new AiError("A ori devolveu uma resposta ilegível. Tente de novo.", 502);
   }
+}
+
+export async function organizeWithGemini(text: string, categories: Cat[]): Promise<ProposedItem[]> {
+  const parsed = await geminiGenerate({
+    system: systemPrompt(todayInSaoPaulo(), categories),
+    contents: [{ role: "user", parts: [{ text }] }],
+    schema: RESPONSE_SCHEMA,
+  });
   return normalizeItems(parsed, categories);
 }

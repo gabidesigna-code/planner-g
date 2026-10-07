@@ -1,0 +1,1266 @@
+{
+  "note": "Gerado a partir de src/theme/palettes.ts no momento do arquivamento. Valores HSL originais + HEX equivalente.",
+  "default": "oliva-vinho",
+  "palettes": [
+    {
+      "id": "oliva-vinho",
+      "name": "Oliva + Vinho",
+      "mood": "Sofisticada, alternativa, natural",
+      "default": true,
+      "light": {
+        "background": {
+          "hsl": "90 11% 96.5%",
+          "hex": "#F6F7F5"
+        },
+        "surface": {
+          "hsl": "0 0% 100%",
+          "hex": "#FFFFFF"
+        },
+        "sidebar": {
+          "hsl": "110 11% 89.6%",
+          "hex": "#E3E7E2"
+        },
+        "foreground": {
+          "hsl": "150 8% 9.4%",
+          "hex": "#161A18"
+        },
+        "muted": {
+          "hsl": "120 9% 89%",
+          "hex": "#E0E5E0"
+        },
+        "mutedForeground": {
+          "hsl": "153 6% 35%",
+          "hex": "#545F5A"
+        },
+        "border": {
+          "hsl": "130 8% 84.7%",
+          "hex": "#D5DBD6"
+        },
+        "hover": {
+          "hsl": "120 10% 92.5%",
+          "hex": "#EAEEEA"
+        },
+        "ring": {
+          "hsl": "149 24% 17%",
+          "hex": "#21362B"
+        },
+        "primary": {
+          "hsl": "149 24% 17%",
+          "hex": "#21362B"
+        },
+        "primaryForeground": {
+          "hsl": "0 0% 100%",
+          "hex": "#FFFFFF"
+        },
+        "work": {
+          "hsl": "128 13% 35.5%",
+          "hex": "#4F6652"
+        },
+        "workSoft": {
+          "hsl": "120 15% 92%",
+          "hex": "#E8EEE8"
+        },
+        "workForeground": {
+          "hsl": "0 0% 100%",
+          "hex": "#FFFFFF"
+        },
+        "personal": {
+          "hsl": "335 31% 36.5%",
+          "hex": "#7A4058"
+        },
+        "personalSoft": {
+          "hsl": "330 28% 93%",
+          "hex": "#F2E8ED"
+        },
+        "personalForeground": {
+          "hsl": "0 0% 100%",
+          "hex": "#FFFFFF"
+        },
+        "cool": {
+          "hsl": "204 10% 49%",
+          "hex": "#707F89"
+        },
+        "waiting": {
+          "hsl": "33 46% 35%",
+          "hex": "#825D30"
+        },
+        "waitingSoft": {
+          "hsl": "33 45% 92%",
+          "hex": "#F4ECE1"
+        },
+        "urgent": {
+          "hsl": "12 52% 41%",
+          "hex": "#9F4832"
+        },
+        "urgentSoft": {
+          "hsl": "12 50% 93%",
+          "hex": "#F6E8E4"
+        },
+        "done": {
+          "hsl": "126 18% 32%",
+          "hex": "#436046"
+        },
+        "doneSoft": {
+          "hsl": "126 16% 91%",
+          "hex": "#E4ECE5"
+        },
+        "shadow": {
+          "hsl": "149 30% 10%",
+          "hex": "#122119"
+        }
+      },
+      "dark": {
+        "background": {
+          "hsl": "150 12% 6.5%",
+          "hex": "#0F1311"
+        },
+        "surface": {
+          "hsl": "150 10% 9.5%",
+          "hex": "#161B18"
+        },
+        "sidebar": {
+          "hsl": "150 13% 5%",
+          "hex": "#0B0E0D"
+        },
+        "foreground": {
+          "hsl": "110 12% 92%",
+          "hex": "#E9EDE8"
+        },
+        "muted": {
+          "hsl": "150 8% 17%",
+          "hex": "#282F2B"
+        },
+        "mutedForeground": {
+          "hsl": "140 6% 62%",
+          "hex": "#98A49C"
+        },
+        "border": {
+          "hsl": "150 8% 19%",
+          "hex": "#2D3430"
+        },
+        "hover": {
+          "hsl": "150 9% 14%",
+          "hex": "#202724"
+        },
+        "ring": {
+          "hsl": "140 22% 80%",
+          "hex": "#C1D7C8"
+        },
+        "primary": {
+          "hsl": "140 24% 80%",
+          "hex": "#C0D8C8"
+        },
+        "primaryForeground": {
+          "hsl": "150 20% 8%",
+          "hex": "#101814"
+        },
+        "work": {
+          "hsl": "128 26% 64%",
+          "hex": "#8BBB92"
+        },
+        "workSoft": {
+          "hsl": "128 14% 14%",
+          "hex": "#1F2920"
+        },
+        "workForeground": {
+          "hsl": "150 20% 8%",
+          "hex": "#101814"
+        },
+        "personal": {
+          "hsl": "335 40% 73%",
+          "hex": "#D69FB6"
+        },
+        "personalSoft": {
+          "hsl": "335 16% 16%",
+          "hex": "#2F2228"
+        },
+        "personalForeground": {
+          "hsl": "335 30% 10%",
+          "hex": "#211218"
+        },
+        "cool": {
+          "hsl": "204 22% 66%",
+          "hex": "#95ACBB"
+        },
+        "waiting": {
+          "hsl": "36 50% 62%",
+          "hex": "#CFA86E"
+        },
+        "waitingSoft": {
+          "hsl": "36 20% 15%",
+          "hex": "#2E281F"
+        },
+        "urgent": {
+          "hsl": "12 62% 64%",
+          "hex": "#DC816A"
+        },
+        "urgentSoft": {
+          "hsl": "12 24% 17%",
+          "hex": "#362521"
+        },
+        "done": {
+          "hsl": "126 26% 62%",
+          "hex": "#85B78A"
+        },
+        "doneSoft": {
+          "hsl": "126 12% 15%",
+          "hex": "#222B23"
+        },
+        "shadow": {
+          "hsl": "0 0% 0%",
+          "hex": "#000000"
+        }
+      }
+    },
+    {
+      "id": "vinho-azul",
+      "name": "Vinho + Azul",
+      "mood": "Urbana, moderna, marcante",
+      "default": false,
+      "light": {
+        "background": {
+          "hsl": "216 22% 96%",
+          "hex": "#F3F4F7"
+        },
+        "surface": {
+          "hsl": "0 0% 100%",
+          "hex": "#FFFFFF"
+        },
+        "sidebar": {
+          "hsl": "216 18% 90%",
+          "hex": "#E1E5EA"
+        },
+        "foreground": {
+          "hsl": "224 26% 11%",
+          "hex": "#151923"
+        },
+        "muted": {
+          "hsl": "216 16% 89%",
+          "hex": "#DEE2E7"
+        },
+        "mutedForeground": {
+          "hsl": "218 10% 40%",
+          "hex": "#5C6370"
+        },
+        "border": {
+          "hsl": "216 14% 83%",
+          "hex": "#CED2DA"
+        },
+        "hover": {
+          "hsl": "216 20% 92.5%",
+          "hex": "#E8EBF0"
+        },
+        "ring": {
+          "hsl": "340 46% 24%",
+          "hex": "#592134"
+        },
+        "primary": {
+          "hsl": "340 46% 24%",
+          "hex": "#592134"
+        },
+        "primaryForeground": {
+          "hsl": "0 0% 100%",
+          "hex": "#FFFFFF"
+        },
+        "work": {
+          "hsl": "216 58% 33%",
+          "hex": "#234A85"
+        },
+        "workSoft": {
+          "hsl": "216 50% 93%",
+          "hex": "#E4EBF6"
+        },
+        "workForeground": {
+          "hsl": "0 0% 100%",
+          "hex": "#FFFFFF"
+        },
+        "personal": {
+          "hsl": "340 44% 36%",
+          "hex": "#84334E"
+        },
+        "personalSoft": {
+          "hsl": "340 34% 94%",
+          "hex": "#F5EAEE"
+        },
+        "personalForeground": {
+          "hsl": "0 0% 100%",
+          "hex": "#FFFFFF"
+        },
+        "cool": {
+          "hsl": "212 16% 48%",
+          "hex": "#67798E"
+        },
+        "waiting": {
+          "hsl": "36 66% 34%",
+          "hex": "#90621D"
+        },
+        "waitingSoft": {
+          "hsl": "38 60% 92%",
+          "hex": "#F7EEDE"
+        },
+        "urgent": {
+          "hsl": "12 68% 42%",
+          "hex": "#B43F22"
+        },
+        "urgentSoft": {
+          "hsl": "12 60% 93%",
+          "hex": "#F8E7E2"
+        },
+        "done": {
+          "hsl": "166 34% 31%",
+          "hex": "#346A5D"
+        },
+        "doneSoft": {
+          "hsl": "166 24% 91%",
+          "hex": "#E3EEEB"
+        },
+        "shadow": {
+          "hsl": "225 40% 10%",
+          "hex": "#0F1424"
+        }
+      },
+      "dark": {
+        "background": {
+          "hsl": "224 24% 7%",
+          "hex": "#0E1016"
+        },
+        "surface": {
+          "hsl": "224 20% 10.5%",
+          "hex": "#151820"
+        },
+        "sidebar": {
+          "hsl": "224 26% 5%",
+          "hex": "#090B10"
+        },
+        "foreground": {
+          "hsl": "216 18% 92%",
+          "hex": "#E7EAEE"
+        },
+        "muted": {
+          "hsl": "224 14% 18%",
+          "hex": "#272B34"
+        },
+        "mutedForeground": {
+          "hsl": "218 10% 64%",
+          "hex": "#9AA1AC"
+        },
+        "border": {
+          "hsl": "224 14% 19%",
+          "hex": "#2A2D37"
+        },
+        "hover": {
+          "hsl": "224 16% 14%",
+          "hex": "#1E2129"
+        },
+        "ring": {
+          "hsl": "340 50% 78%",
+          "hex": "#E3ABBE"
+        },
+        "primary": {
+          "hsl": "340 48% 74%",
+          "hex": "#DD9DB2"
+        },
+        "primaryForeground": {
+          "hsl": "340 40% 10%",
+          "hex": "#240F16"
+        },
+        "work": {
+          "hsl": "214 62% 70%",
+          "hex": "#83ACE2"
+        },
+        "workSoft": {
+          "hsl": "216 28% 15%",
+          "hex": "#1C2431"
+        },
+        "workForeground": {
+          "hsl": "224 40% 8%",
+          "hex": "#0C111D"
+        },
+        "personal": {
+          "hsl": "340 50% 74%",
+          "hex": "#DE9CB2"
+        },
+        "personalSoft": {
+          "hsl": "340 20% 16%",
+          "hex": "#312126"
+        },
+        "personalForeground": {
+          "hsl": "340 40% 10%",
+          "hex": "#240F16"
+        },
+        "cool": {
+          "hsl": "212 24% 66%",
+          "hex": "#93A7BD"
+        },
+        "waiting": {
+          "hsl": "38 60% 62%",
+          "hex": "#D8AE64"
+        },
+        "waitingSoft": {
+          "hsl": "38 22% 15%",
+          "hex": "#2F281E"
+        },
+        "urgent": {
+          "hsl": "12 72% 66%",
+          "hex": "#E7836A"
+        },
+        "urgentSoft": {
+          "hsl": "12 28% 17%",
+          "hex": "#37241F"
+        },
+        "done": {
+          "hsl": "166 32% 60%",
+          "hex": "#78BAAA"
+        },
+        "doneSoft": {
+          "hsl": "166 14% 14%",
+          "hex": "#1F2926"
+        },
+        "shadow": {
+          "hsl": "0 0% 0%",
+          "hex": "#000000"
+        }
+      }
+    },
+    {
+      "id": "preto-creme",
+      "name": "Preto + Creme",
+      "mood": "Editorial, minimalista, fashion",
+      "default": false,
+      "light": {
+        "background": {
+          "hsl": "42 28% 95.5%",
+          "hex": "#F7F5F0"
+        },
+        "surface": {
+          "hsl": "42 40% 99%",
+          "hex": "#FDFDFB"
+        },
+        "sidebar": {
+          "hsl": "40 16% 90%",
+          "hex": "#EAE7E1"
+        },
+        "foreground": {
+          "hsl": "30 10% 8%",
+          "hex": "#161412"
+        },
+        "muted": {
+          "hsl": "40 14% 88%",
+          "hex": "#E5E2DC"
+        },
+        "mutedForeground": {
+          "hsl": "36 6% 38%",
+          "hex": "#67625B"
+        },
+        "border": {
+          "hsl": "38 12% 82%",
+          "hex": "#D7D3CC"
+        },
+        "hover": {
+          "hsl": "40 18% 91.5%",
+          "hex": "#EDEBE5"
+        },
+        "ring": {
+          "hsl": "30 8% 12%",
+          "hex": "#211F1C"
+        },
+        "primary": {
+          "hsl": "30 8% 11%",
+          "hex": "#1E1C1A"
+        },
+        "primaryForeground": {
+          "hsl": "42 30% 96%",
+          "hex": "#F8F6F2"
+        },
+        "work": {
+          "hsl": "30 6% 26%",
+          "hex": "#46423E"
+        },
+        "workSoft": {
+          "hsl": "40 12% 90%",
+          "hex": "#E9E7E2"
+        },
+        "workForeground": {
+          "hsl": "42 30% 96%",
+          "hex": "#F8F6F2"
+        },
+        "personal": {
+          "hsl": "6 56% 36%",
+          "hex": "#8F3328"
+        },
+        "personalSoft": {
+          "hsl": "8 38% 93%",
+          "hex": "#F4E8E6"
+        },
+        "personalForeground": {
+          "hsl": "42 30% 97%",
+          "hex": "#FAF8F5"
+        },
+        "cool": {
+          "hsl": "36 6% 44%",
+          "hex": "#777269"
+        },
+        "waiting": {
+          "hsl": "34 52% 36%",
+          "hex": "#8C622C"
+        },
+        "waitingSoft": {
+          "hsl": "38 40% 90%",
+          "hex": "#F0E8DB"
+        },
+        "urgent": {
+          "hsl": "16 74% 40%",
+          "hex": "#B1431B"
+        },
+        "urgentSoft": {
+          "hsl": "16 60% 92%",
+          "hex": "#F7E5DE"
+        },
+        "done": {
+          "hsl": "100 14% 32%",
+          "hex": "#4E5D46"
+        },
+        "doneSoft": {
+          "hsl": "100 12% 90%",
+          "hex": "#E4E9E2"
+        },
+        "shadow": {
+          "hsl": "30 20% 8%",
+          "hex": "#181410"
+        }
+      },
+      "dark": {
+        "background": {
+          "hsl": "30 8% 6.5%",
+          "hex": "#12110F"
+        },
+        "surface": {
+          "hsl": "30 7% 9.5%",
+          "hex": "#1A1817"
+        },
+        "sidebar": {
+          "hsl": "30 9% 4.5%",
+          "hex": "#0D0B0A"
+        },
+        "foreground": {
+          "hsl": "40 24% 92%",
+          "hex": "#EFECE6"
+        },
+        "muted": {
+          "hsl": "30 6% 17%",
+          "hex": "#2E2B29"
+        },
+        "mutedForeground": {
+          "hsl": "36 8% 62%",
+          "hex": "#A6A096"
+        },
+        "border": {
+          "hsl": "30 6% 19%",
+          "hex": "#33302E"
+        },
+        "hover": {
+          "hsl": "30 7% 13%",
+          "hex": "#23211F"
+        },
+        "ring": {
+          "hsl": "40 22% 86%",
+          "hex": "#E3DED3"
+        },
+        "primary": {
+          "hsl": "40 26% 90%",
+          "hex": "#ECE8DF"
+        },
+        "primaryForeground": {
+          "hsl": "30 10% 8%",
+          "hex": "#161412"
+        },
+        "work": {
+          "hsl": "40 12% 78%",
+          "hex": "#CEC9C0"
+        },
+        "workSoft": {
+          "hsl": "30 6% 14%",
+          "hex": "#262422"
+        },
+        "workForeground": {
+          "hsl": "30 10% 8%",
+          "hex": "#161412"
+        },
+        "personal": {
+          "hsl": "8 62% 68%",
+          "hex": "#E0887B"
+        },
+        "personalSoft": {
+          "hsl": "8 22% 16%",
+          "hex": "#322220"
+        },
+        "personalForeground": {
+          "hsl": "8 40% 8%",
+          "hex": "#1D0E0C"
+        },
+        "cool": {
+          "hsl": "36 8% 64%",
+          "hex": "#ABA59C"
+        },
+        "waiting": {
+          "hsl": "38 56% 62%",
+          "hex": "#D4AD68"
+        },
+        "waitingSoft": {
+          "hsl": "38 20% 14%",
+          "hex": "#2B261D"
+        },
+        "urgent": {
+          "hsl": "16 74% 64%",
+          "hex": "#E7835F"
+        },
+        "urgentSoft": {
+          "hsl": "16 26% 16%",
+          "hex": "#33241E"
+        },
+        "done": {
+          "hsl": "100 20% 62%",
+          "hex": "#98B18B"
+        },
+        "doneSoft": {
+          "hsl": "100 10% 14%",
+          "hex": "#232720"
+        },
+        "shadow": {
+          "hsl": "0 0% 0%",
+          "hex": "#000000"
+        }
+      }
+    },
+    {
+      "id": "verde-lilas",
+      "name": "Verde + Lilás escuro",
+      "mood": "Diferente, estilosa, sofisticada",
+      "default": false,
+      "light": {
+        "background": {
+          "hsl": "150 10% 96%",
+          "hex": "#F4F6F5"
+        },
+        "surface": {
+          "hsl": "0 0% 100%",
+          "hex": "#FFFFFF"
+        },
+        "sidebar": {
+          "hsl": "155 10% 89.5%",
+          "hex": "#E2E7E5"
+        },
+        "foreground": {
+          "hsl": "160 12% 9%",
+          "hex": "#141A18"
+        },
+        "muted": {
+          "hsl": "150 8% 88%",
+          "hex": "#DEE3E0"
+        },
+        "mutedForeground": {
+          "hsl": "160 6% 34%",
+          "hex": "#515C58"
+        },
+        "border": {
+          "hsl": "150 8% 83%",
+          "hex": "#D0D7D4"
+        },
+        "hover": {
+          "hsl": "150 10% 92%",
+          "hex": "#E9EDEB"
+        },
+        "ring": {
+          "hsl": "156 38% 18%",
+          "hex": "#1C3F31"
+        },
+        "primary": {
+          "hsl": "156 38% 18%",
+          "hex": "#1C3F31"
+        },
+        "primaryForeground": {
+          "hsl": "0 0% 100%",
+          "hex": "#FFFFFF"
+        },
+        "work": {
+          "hsl": "156 32% 28%",
+          "hex": "#315E4C"
+        },
+        "workSoft": {
+          "hsl": "150 16% 91%",
+          "hex": "#E4ECE8"
+        },
+        "workForeground": {
+          "hsl": "0 0% 100%",
+          "hex": "#FFFFFF"
+        },
+        "personal": {
+          "hsl": "286 20% 38%",
+          "hex": "#6B4E74"
+        },
+        "personalSoft": {
+          "hsl": "286 16% 93%",
+          "hex": "#EFEAF0"
+        },
+        "personalForeground": {
+          "hsl": "0 0% 100%",
+          "hex": "#FFFFFF"
+        },
+        "cool": {
+          "hsl": "266 10% 48%",
+          "hex": "#796E87"
+        },
+        "waiting": {
+          "hsl": "36 55% 36%",
+          "hex": "#8E6629"
+        },
+        "waitingSoft": {
+          "hsl": "38 45% 91%",
+          "hex": "#F2EBDE"
+        },
+        "urgent": {
+          "hsl": "8 56% 42%",
+          "hex": "#A73F2F"
+        },
+        "urgentSoft": {
+          "hsl": "8 50% 93%",
+          "hex": "#F6E7E4"
+        },
+        "done": {
+          "hsl": "150 30% 32%",
+          "hex": "#396A52"
+        },
+        "doneSoft": {
+          "hsl": "150 18% 90%",
+          "hex": "#E1EAE6"
+        },
+        "shadow": {
+          "hsl": "160 30% 8%",
+          "hex": "#0E1B16"
+        }
+      },
+      "dark": {
+        "background": {
+          "hsl": "160 14% 6%",
+          "hex": "#0D1110"
+        },
+        "surface": {
+          "hsl": "160 11% 9%",
+          "hex": "#141918"
+        },
+        "sidebar": {
+          "hsl": "162 16% 4.5%",
+          "hex": "#0A0D0C"
+        },
+        "foreground": {
+          "hsl": "150 14% 92%",
+          "hex": "#E8EDEB"
+        },
+        "muted": {
+          "hsl": "158 8% 16%",
+          "hex": "#262C2A"
+        },
+        "mutedForeground": {
+          "hsl": "152 6% 62%",
+          "hex": "#98A49E"
+        },
+        "border": {
+          "hsl": "158 8% 18%",
+          "hex": "#2A322F"
+        },
+        "hover": {
+          "hsl": "158 10% 13%",
+          "hex": "#1E2422"
+        },
+        "ring": {
+          "hsl": "150 30% 78%",
+          "hex": "#B6D8C7"
+        },
+        "primary": {
+          "hsl": "150 34% 76%",
+          "hex": "#ADD7C2"
+        },
+        "primaryForeground": {
+          "hsl": "160 24% 8%",
+          "hex": "#101916"
+        },
+        "work": {
+          "hsl": "152 34% 62%",
+          "hex": "#7DBFA0"
+        },
+        "workSoft": {
+          "hsl": "156 14% 13%",
+          "hex": "#1D2622"
+        },
+        "workForeground": {
+          "hsl": "160 24% 8%",
+          "hex": "#101916"
+        },
+        "personal": {
+          "hsl": "290 34% 76%",
+          "hex": "#D0ADD7"
+        },
+        "personalSoft": {
+          "hsl": "290 14% 16%",
+          "hex": "#2D232F"
+        },
+        "personalForeground": {
+          "hsl": "290 30% 10%",
+          "hex": "#1F1221"
+        },
+        "cool": {
+          "hsl": "270 18% 70%",
+          "hex": "#B3A5C0"
+        },
+        "waiting": {
+          "hsl": "38 54% 62%",
+          "hex": "#D2AC6A"
+        },
+        "waitingSoft": {
+          "hsl": "38 20% 14%",
+          "hex": "#2B261D"
+        },
+        "urgent": {
+          "hsl": "8 66% 66%",
+          "hex": "#E27E6F"
+        },
+        "urgentSoft": {
+          "hsl": "8 24% 16%",
+          "hex": "#33221F"
+        },
+        "done": {
+          "hsl": "150 28% 60%",
+          "hex": "#7CB699"
+        },
+        "doneSoft": {
+          "hsl": "150 12% 14%",
+          "hex": "#1F2824"
+        },
+        "shadow": {
+          "hsl": "0 0% 0%",
+          "hex": "#000000"
+        }
+      }
+    },
+    {
+      "id": "petroleo-terracota",
+      "name": "Petróleo + Terracota",
+      "mood": "Moderna, quente, profissional",
+      "default": false,
+      "light": {
+        "background": {
+          "hsl": "36 24% 95.5%",
+          "hex": "#F6F4F1"
+        },
+        "surface": {
+          "hsl": "38 40% 99%",
+          "hex": "#FDFDFB"
+        },
+        "sidebar": {
+          "hsl": "34 16% 89.5%",
+          "hex": "#E9E5E0"
+        },
+        "foreground": {
+          "hsl": "200 20% 10%",
+          "hex": "#141B1F"
+        },
+        "muted": {
+          "hsl": "34 12% 87.5%",
+          "hex": "#E3E0DB"
+        },
+        "mutedForeground": {
+          "hsl": "30 6% 38%",
+          "hex": "#67615B"
+        },
+        "border": {
+          "hsl": "34 12% 82%",
+          "hex": "#D7D2CC"
+        },
+        "hover": {
+          "hsl": "34 18% 91.5%",
+          "hex": "#EDEAE5"
+        },
+        "ring": {
+          "hsl": "192 56% 19%",
+          "hex": "#15414C"
+        },
+        "primary": {
+          "hsl": "192 56% 19%",
+          "hex": "#15414C"
+        },
+        "primaryForeground": {
+          "hsl": "40 40% 97%",
+          "hex": "#FAF8F4"
+        },
+        "work": {
+          "hsl": "192 52% 26%",
+          "hex": "#205765"
+        },
+        "workSoft": {
+          "hsl": "190 26% 91%",
+          "hex": "#E2ECEE"
+        },
+        "workForeground": {
+          "hsl": "0 0% 100%",
+          "hex": "#FFFFFF"
+        },
+        "personal": {
+          "hsl": "14 56% 40%",
+          "hex": "#9F482D"
+        },
+        "personalSoft": {
+          "hsl": "16 50% 93%",
+          "hex": "#F6E9E4"
+        },
+        "personalForeground": {
+          "hsl": "0 0% 100%",
+          "hex": "#FFFFFF"
+        },
+        "cool": {
+          "hsl": "196 16% 44%",
+          "hex": "#5E7982"
+        },
+        "waiting": {
+          "hsl": "38 72% 32%",
+          "hex": "#8C6117"
+        },
+        "waitingSoft": {
+          "hsl": "40 55% 90%",
+          "hex": "#F4EAD7"
+        },
+        "urgent": {
+          "hsl": "356 60% 42%",
+          "hex": "#AB2B33"
+        },
+        "urgentSoft": {
+          "hsl": "356 50% 93%",
+          "hex": "#F6E4E5"
+        },
+        "done": {
+          "hsl": "160 30% 30%",
+          "hex": "#366354"
+        },
+        "doneSoft": {
+          "hsl": "160 18% 90%",
+          "hex": "#E1EAE7"
+        },
+        "shadow": {
+          "hsl": "200 40% 8%",
+          "hex": "#0C171D"
+        }
+      },
+      "dark": {
+        "background": {
+          "hsl": "200 22% 6.5%",
+          "hex": "#0D1214"
+        },
+        "surface": {
+          "hsl": "200 18% 9.5%",
+          "hex": "#141A1D"
+        },
+        "sidebar": {
+          "hsl": "200 26% 4.5%",
+          "hex": "#080C0E"
+        },
+        "foreground": {
+          "hsl": "36 20% 92%",
+          "hex": "#EFEBE7"
+        },
+        "muted": {
+          "hsl": "200 12% 16%",
+          "hex": "#242A2E"
+        },
+        "mutedForeground": {
+          "hsl": "196 8% 62%",
+          "hex": "#96A2A6"
+        },
+        "border": {
+          "hsl": "200 12% 18%",
+          "hex": "#283033"
+        },
+        "hover": {
+          "hsl": "200 14% 13%",
+          "hex": "#1D2326"
+        },
+        "ring": {
+          "hsl": "190 36% 76%",
+          "hex": "#ACD0D8"
+        },
+        "primary": {
+          "hsl": "190 42% 72%",
+          "hex": "#9ACCD6"
+        },
+        "primaryForeground": {
+          "hsl": "200 30% 8%",
+          "hex": "#0E161B"
+        },
+        "work": {
+          "hsl": "190 46% 64%",
+          "hex": "#79BFCD"
+        },
+        "workSoft": {
+          "hsl": "196 20% 13%",
+          "hex": "#1B2428"
+        },
+        "workForeground": {
+          "hsl": "200 30% 8%",
+          "hex": "#0E161B"
+        },
+        "personal": {
+          "hsl": "16 66% 66%",
+          "hex": "#E28E6F"
+        },
+        "personalSoft": {
+          "hsl": "16 22% 15%",
+          "hex": "#2F221E"
+        },
+        "personalForeground": {
+          "hsl": "16 40% 8%",
+          "hex": "#1D110C"
+        },
+        "cool": {
+          "hsl": "196 20% 66%",
+          "hex": "#97B0BA"
+        },
+        "waiting": {
+          "hsl": "40 62% 60%",
+          "hex": "#D8AE5A"
+        },
+        "waitingSoft": {
+          "hsl": "40 22% 14%",
+          "hex": "#2C261C"
+        },
+        "urgent": {
+          "hsl": "356 68% 68%",
+          "hex": "#E5767D"
+        },
+        "urgentSoft": {
+          "hsl": "356 24% 16%",
+          "hex": "#331F20"
+        },
+        "done": {
+          "hsl": "160 28% 58%",
+          "hex": "#76B29E"
+        },
+        "doneSoft": {
+          "hsl": "160 12% 13%",
+          "hex": "#1D2522"
+        },
+        "shadow": {
+          "hsl": "0 0% 0%",
+          "hex": "#000000"
+        }
+      }
+    },
+    {
+      "id": "monochrome",
+      "name": "Monochrome",
+      "mood": "Quase monocromática, muito clean",
+      "default": false,
+      "light": {
+        "background": {
+          "hsl": "220 7% 96%",
+          "hex": "#F4F5F6"
+        },
+        "surface": {
+          "hsl": "0 0% 100%",
+          "hex": "#FFFFFF"
+        },
+        "sidebar": {
+          "hsl": "220 6% 90.5%",
+          "hex": "#E5E6E8"
+        },
+        "foreground": {
+          "hsl": "220 10% 9%",
+          "hex": "#151619"
+        },
+        "muted": {
+          "hsl": "220 6% 88%",
+          "hex": "#DFE0E2"
+        },
+        "mutedForeground": {
+          "hsl": "220 5% 40%",
+          "hex": "#61646B"
+        },
+        "border": {
+          "hsl": "220 6% 83%",
+          "hex": "#D1D3D6"
+        },
+        "hover": {
+          "hsl": "220 6% 92.5%",
+          "hex": "#EBEBED"
+        },
+        "ring": {
+          "hsl": "220 10% 14%",
+          "hex": "#202327"
+        },
+        "primary": {
+          "hsl": "220 10% 14%",
+          "hex": "#202327"
+        },
+        "primaryForeground": {
+          "hsl": "0 0% 100%",
+          "hex": "#FFFFFF"
+        },
+        "work": {
+          "hsl": "220 12% 26%",
+          "hex": "#3A404A"
+        },
+        "workSoft": {
+          "hsl": "220 8% 90%",
+          "hex": "#E3E5E8"
+        },
+        "workForeground": {
+          "hsl": "0 0% 100%",
+          "hex": "#FFFFFF"
+        },
+        "personal": {
+          "hsl": "220 4% 44%",
+          "hex": "#6C6F75"
+        },
+        "personalSoft": {
+          "hsl": "220 3% 94%",
+          "hex": "#EFF0F0"
+        },
+        "personalForeground": {
+          "hsl": "0 0% 100%",
+          "hex": "#FFFFFF"
+        },
+        "cool": {
+          "hsl": "220 6% 46%",
+          "hex": "#6E737C"
+        },
+        "waiting": {
+          "hsl": "36 28% 36%",
+          "hex": "#766142"
+        },
+        "waitingSoft": {
+          "hsl": "36 22% 91%",
+          "hex": "#EDE9E3"
+        },
+        "urgent": {
+          "hsl": "8 46% 42%",
+          "hex": "#9C473A"
+        },
+        "urgentSoft": {
+          "hsl": "8 34% 93%",
+          "hex": "#F3E9E7"
+        },
+        "done": {
+          "hsl": "150 12% 34%",
+          "hex": "#4C6157"
+        },
+        "doneSoft": {
+          "hsl": "150 8% 90%",
+          "hex": "#E3E8E6"
+        },
+        "shadow": {
+          "hsl": "220 20% 8%",
+          "hex": "#101318"
+        }
+      },
+      "dark": {
+        "background": {
+          "hsl": "220 8% 6.5%",
+          "hex": "#0F1012"
+        },
+        "surface": {
+          "hsl": "220 7% 9.5%",
+          "hex": "#17181A"
+        },
+        "sidebar": {
+          "hsl": "220 9% 4.5%",
+          "hex": "#0A0B0D"
+        },
+        "foreground": {
+          "hsl": "220 8% 92%",
+          "hex": "#E9EAEC"
+        },
+        "muted": {
+          "hsl": "220 5% 17%",
+          "hex": "#292B2E"
+        },
+        "mutedForeground": {
+          "hsl": "220 5% 62%",
+          "hex": "#999CA3"
+        },
+        "border": {
+          "hsl": "220 5% 19%",
+          "hex": "#2E3033"
+        },
+        "hover": {
+          "hsl": "220 6% 13%",
+          "hex": "#1F2023"
+        },
+        "ring": {
+          "hsl": "220 8% 84%",
+          "hex": "#D3D5D9"
+        },
+        "primary": {
+          "hsl": "220 10% 88%",
+          "hex": "#DDDFE3"
+        },
+        "primaryForeground": {
+          "hsl": "220 10% 8%",
+          "hex": "#121416"
+        },
+        "work": {
+          "hsl": "220 14% 80%",
+          "hex": "#C5CAD3"
+        },
+        "workSoft": {
+          "hsl": "220 6% 14%",
+          "hex": "#222326"
+        },
+        "workForeground": {
+          "hsl": "220 10% 8%",
+          "hex": "#121416"
+        },
+        "personal": {
+          "hsl": "220 5% 64%",
+          "hex": "#9FA2A8"
+        },
+        "personalSoft": {
+          "hsl": "220 4% 12%",
+          "hex": "#1D1E20"
+        },
+        "personalForeground": {
+          "hsl": "220 10% 8%",
+          "hex": "#121416"
+        },
+        "cool": {
+          "hsl": "220 8% 66%",
+          "hex": "#A1A6AF"
+        },
+        "waiting": {
+          "hsl": "38 36% 62%",
+          "hex": "#C1A77B"
+        },
+        "waitingSoft": {
+          "hsl": "38 14% 14%",
+          "hex": "#29251F"
+        },
+        "urgent": {
+          "hsl": "8 52% 66%",
+          "hex": "#D5877B"
+        },
+        "urgentSoft": {
+          "hsl": "8 20% 15%",
+          "hex": "#2E211F"
+        },
+        "done": {
+          "hsl": "150 14% 62%",
+          "hex": "#91AC9E"
+        },
+        "doneSoft": {
+          "hsl": "150 8% 13%",
+          "hex": "#1E2421"
+        },
+        "shadow": {
+          "hsl": "0 0% 0%",
+          "hex": "#000000"
+        }
+      }
+    }
+  ]
+}

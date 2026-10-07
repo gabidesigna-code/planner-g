@@ -1,27 +1,167 @@
-/**
- * Marca "gabi": wordmark em linha única (Syne, desenhado em curvas) com um ✦ no lugar do ponto do "i".
- * O texto usa currentColor, então acompanha o tema; o ✦ fica na cor do contexto Pessoal.
- * A versão compacta é o bloco "ga / bi", com o mesmo ✦.
- */
-const WORD = "M29.4 -7.7Q21.9 -7.7 16.1 -10.2Q10.2 -12.6 6.9 -17.4Q3.6 -22.2 3.6 -29Q3.6 -35.7 6.8 -40.6Q10 -45.5 15.9 -48.2Q21.7 -50.8 29.4 -50.8Q31.5 -50.8 33.6 -50.6Q35.6 -50.3 37.5 -49.8L61.6 -49.7L61.6 -40.2Q56.6 -40.1 51.6 -41.5Q46.6 -42.9 42.8 -44.5L42.5 -45.1Q45.9 -43.5 48.8 -41.1Q51.6 -38.7 53.3 -35.6Q55 -32.5 55 -28.5Q55 -22 51.8 -17.3Q48.6 -12.6 42.9 -10.2Q37.1 -7.7 29.4 -7.7ZM45.6 20.4L45.6 18Q45.6 13.3 42.7 11.4Q39.8 9.4 34.6 9.4L20.4 9.4Q16.1 9.4 13.2 8.8Q10.3 8.1 8.6 6.9Q6.8 5.6 6 3.9Q5.2 2.1 5.2 0.1Q5.2 -3.8 7.7 -5.9Q10.2 -7.9 14.4 -8.6Q18.6 -9.2 23.4 -8.8L29.4 -7.7Q23.3 -7.4 20.3 -6.6Q17.2 -5.8 17.2 -3.2Q17.2 -1.7 18.4 -0.9Q19.6 0 21.8 0L36.8 0Q43.2 0 47.9 1.5Q52.5 2.9 55 6.4Q57.5 9.8 57.5 15.8L57.5 20.4ZM29.4 -16.6Q33.5 -16.6 36.6 -18.1Q39.8 -19.5 41.6 -22.3Q43.4 -25 43.4 -28.9Q43.4 -32.9 41.6 -35.7Q39.8 -38.5 36.6 -40Q33.5 -41.5 29.4 -41.5Q25.3 -41.5 22.1 -40Q18.9 -38.5 17.1 -35.7Q15.3 -32.9 15.3 -28.9Q15.3 -25 17.1 -22.3Q18.9 -19.5 22.1 -18.1Q25.2 -16.6 29.4 -16.6ZM96 1.1Q89 1.1 83.2 -2.2Q77.4 -5.5 73.9 -11.4Q70.5 -17.2 70.5 -24.8Q70.5 -32.6 74 -38.5Q77.5 -44.3 83.4 -47.6Q89.3 -50.8 96.8 -50.8Q105 -50.8 109.9 -47.4Q114.8 -43.9 117 -38Q119.2 -32.1 119.2 -24.8Q119.2 -20.6 117.9 -16.1Q116.6 -11.5 113.9 -7.6Q111.3 -3.7 106.8 -1.3Q102.4 1.1 96 1.1ZM99.7 -8.4Q105.5 -8.4 109.6 -10.5Q113.7 -12.6 115.8 -16.4Q117.9 -20.1 117.9 -24.8Q117.9 -30 115.7 -33.7Q113.6 -37.4 109.5 -39.4Q105.4 -41.3 99.7 -41.3Q91.6 -41.3 87.1 -36.8Q82.6 -32.2 82.6 -24.8Q82.6 -19.9 84.8 -16.2Q87 -12.5 90.8 -10.5Q94.7 -8.4 99.7 -8.4ZM117.9 -49.8L129.8 -49.8L129.8 0L118.8 0Q118.8 0 118.5 -1.9Q118.3 -3.8 118.1 -6.7Q117.9 -9.6 117.9 -12.2ZM179.9 1.1Q173.5 1.1 169.1 -1.3Q164.7 -3.7 162 -7.6Q159.3 -11.5 158.1 -16.1Q156.8 -20.6 156.8 -24.8Q156.8 -30.3 158 -35Q159.2 -39.7 161.9 -43.3Q164.5 -46.8 169 -48.8Q173.4 -50.8 179.9 -50.8Q187.3 -50.8 193 -47.6Q198.7 -44.3 202 -38.5Q205.3 -32.6 205.3 -24.8Q205.3 -17.2 202 -11.4Q198.6 -5.5 192.9 -2.2Q187.1 1.1 179.9 1.1ZM176.2 -8.4Q181.3 -8.4 185.2 -10.5Q189 -12.5 191.1 -16.2Q193.2 -19.9 193.2 -24.8Q193.2 -32.2 188.8 -36.8Q184.3 -41.4 176.2 -41.4Q170.6 -41.4 166.5 -39.4Q162.4 -37.4 160.2 -33.7Q158 -30 158 -24.8Q158 -20.1 160.2 -16.4Q162.3 -12.6 166.4 -10.5Q170.5 -8.4 176.2 -8.4ZM158 -69.8L158 -12.2Q158 -9.3 157.7 -5.8Q157.4 -2.3 157.1 0L146.1 0L146.1 -69.8ZM219.3 -49.8L231.2 -49.8L231.2 0L219.3 0Z";
-const WORD_STAR = "M225.25 -78.69Q227.33 -67.74 238.29 -65.65Q227.33 -63.56 225.25 -52.61Q223.16 -63.56 212.2 -65.65Q223.16 -67.74 225.25 -78.69Z";
-const BLOCK = "M29.4 -7.7Q21.9 -7.7 16.1 -10.2Q10.2 -12.6 6.9 -17.4Q3.6 -22.2 3.6 -29Q3.6 -35.7 6.8 -40.6Q10 -45.5 15.9 -48.2Q21.7 -50.8 29.4 -50.8Q31.5 -50.8 33.6 -50.6Q35.6 -50.3 37.5 -49.8L61.6 -49.7L61.6 -40.2Q56.6 -40.1 51.6 -41.5Q46.6 -42.9 42.8 -44.5L42.5 -45.1Q45.9 -43.5 48.8 -41.1Q51.6 -38.7 53.3 -35.6Q55 -32.5 55 -28.5Q55 -22 51.8 -17.3Q48.6 -12.6 42.9 -10.2Q37.1 -7.7 29.4 -7.7ZM45.6 20.4L45.6 18Q45.6 13.3 42.7 11.4Q39.8 9.4 34.6 9.4L20.4 9.4Q16.1 9.4 13.2 8.8Q10.3 8.1 8.6 6.9Q6.8 5.6 6 3.9Q5.2 2.1 5.2 0.1Q5.2 -3.8 7.7 -5.9Q10.2 -7.9 14.4 -8.6Q18.6 -9.2 23.4 -8.8L29.4 -7.7Q23.3 -7.4 20.3 -6.6Q17.2 -5.8 17.2 -3.2Q17.2 -1.7 18.4 -0.9Q19.6 0 21.8 0L36.8 0Q43.2 0 47.9 1.5Q52.5 2.9 55 6.4Q57.5 9.8 57.5 15.8L57.5 20.4ZM29.4 -16.6Q33.5 -16.6 36.6 -18.1Q39.8 -19.5 41.6 -22.3Q43.4 -25 43.4 -28.9Q43.4 -32.9 41.6 -35.7Q39.8 -38.5 36.6 -40Q33.5 -41.5 29.4 -41.5Q25.3 -41.5 22.1 -40Q18.9 -38.5 17.1 -35.7Q15.3 -32.9 15.3 -28.9Q15.3 -25 17.1 -22.3Q18.9 -19.5 22.1 -18.1Q25.2 -16.6 29.4 -16.6ZM91.4 1.1Q84.4 1.1 78.6 -2.2Q72.8 -5.5 69.3 -11.4Q65.9 -17.2 65.9 -24.8Q65.9 -32.6 69.4 -38.5Q72.9 -44.3 78.8 -47.6Q84.7 -50.8 92.2 -50.8Q100.4 -50.8 105.3 -47.4Q110.2 -43.9 112.4 -38Q114.6 -32.1 114.6 -24.8Q114.6 -20.6 113.3 -16.1Q112 -11.5 109.3 -7.6Q106.7 -3.7 102.2 -1.3Q97.8 1.1 91.4 1.1ZM95.1 -8.4Q100.9 -8.4 105 -10.5Q109.1 -12.6 111.2 -16.4Q113.3 -20.1 113.3 -24.8Q113.3 -30 111.1 -33.7Q109 -37.4 104.9 -39.4Q100.8 -41.3 95.1 -41.3Q87 -41.3 82.5 -36.8Q78 -32.2 78 -24.8Q78 -19.9 80.2 -16.2Q82.4 -12.5 86.2 -10.5Q90.1 -8.4 95.1 -8.4ZM113.3 -49.8L125.2 -49.8L125.2 0L114.2 0Q114.2 0 113.9 -1.9Q113.7 -3.8 113.5 -6.7Q113.3 -9.6 113.3 -12.2ZM41.8 98.3Q35.4 98.3 31 95.9Q26.6 93.5 23.9 89.6Q21.2 85.7 20 81.1Q18.7 76.6 18.7 72.4Q18.7 66.9 19.9 62.2Q21.1 57.5 23.8 53.9Q26.4 50.4 30.9 48.4Q35.3 46.4 41.8 46.4Q49.2 46.4 54.9 49.6Q60.6 52.9 63.9 58.7Q67.2 64.6 67.2 72.4Q67.2 80 63.9 85.8Q60.5 91.7 54.8 95Q49 98.3 41.8 98.3ZM38.1 88.8Q43.2 88.8 47.1 86.7Q50.9 84.7 53 81Q55.1 77.3 55.1 72.4Q55.1 65 50.7 60.4Q46.2 55.8 38.1 55.8Q32.5 55.8 28.4 57.8Q24.3 59.8 22.1 63.5Q19.9 67.2 19.9 72.4Q19.9 77.1 22.1 80.8Q24.2 84.6 28.3 86.7Q32.4 88.8 38.1 88.8ZM19.9 27.4L19.9 85Q19.9 87.9 19.6 91.4Q19.3 94.9 19 97.2L8 97.2L8 27.4ZM76.6 47.4L88.5 47.4L88.5 97.2L76.6 97.2Z";
-const BLOCK_STAR = "M82.5 13.22Q88.74 25.32 100.83 31.55Q88.74 37.78 82.5 49.88Q76.27 37.78 64.17 31.55Q76.27 25.32 82.5 13.22Z";
+import { useId, type CSSProperties, type ReactNode } from "react";
 
-export function Wordmark({ className, title = "gabi" }: { className?: string; title?: string }) {
+/**
+ * Marca "ora" (o app) e "ori" (a assistente): sistema final G2.
+ *
+ * Tudo é geométrico, desenhado em traços sobre uma grade de altura-x = 60 (linha de base em y = 0),
+ * então não depende de fonte. O parentesco entre as duas marcas é UM corte horizontal à meia altura-x,
+ * com a mesma abertura (7 un.) em todas as peças: um entalhe por fora no "o" dos wordmarks e nos ícones.
+ * Wordmarks e símbolos usam `currentColor`; só o ponto da ori usa a cor `--ori` (ultramar).
+ *
+ * A marca anterior ("gabi") está arquivada em /brand-archive/gabi e NÃO deve ser usada aqui.
+ */
+
+/** Cores opcionais: sem elas, a marca usa a cor do texto e os tokens do tema. */
+interface Colors {
+  /** tinta do wordmark / símbolo (ou cor do quadrado, quando `tile`) */
+  ink?: string;
+  /** cor do símbolo sobre o quadrado (`tile`) */
+  bg?: string;
+  /** cor do ponto da ori */
+  accent?: string;
+}
+
+interface MarkProps extends Colors {
+  className?: string;
+  style?: CSSProperties;
+  title?: string;
+}
+
+interface IconProps extends MarkProps {
+  /** true = quadrado arredondado (app icon, avatar, favicon); false = só o símbolo */
+  tile?: boolean;
+}
+
+const ORI = "hsl(var(--ori))";
+const BG = "hsl(var(--background))";
+
+const stroke = (w: number) => ({ fill: "none", stroke: "currentColor", strokeWidth: w, strokeLinecap: "butt" as const });
+const safeId = (raw: string) => raw.replace(/[^a-zA-Z0-9_-]/g, "");
+
+/** Remove um entalhe horizontal (`gap` un.) da parede direita (ou esquerda) do anel; `depth` = quanto da parede, a partir de fora. */
+function Notch({ children, cx, rx, wall, gap, depth, side }: { children: ReactNode; cx: number; rx: number; wall: number; gap: number; depth: number; side: "r" | "l" }) {
+  const id = safeId(useId());
+  const x1 = side === "r" ? cx + rx + wall / 2 - depth : cx - rx - 20;
+  const x2 = side === "r" ? cx + rx + 20 : cx - rx - wall / 2 + depth;
+  const y1 = -30 - gap / 2;
+  const y2 = -30 + gap / 2;
   return (
-    <svg viewBox="2.6 -79.7 236.7 101.1" role="img" aria-label={title} className={className}>
-      <path d={WORD} fill="currentColor" />
-      <path d={WORD_STAR} className="fill-personal" />
+    <>
+      <defs>
+        <clipPath id={id}>
+          <path clipRule="evenodd" d={`M-100 -200H900V200H-100Z M${x1} ${y1}H${x2}V${y2}H${x1}Z`} />
+        </clipPath>
+      </defs>
+      <g clipPath={`url(#${id})`}>{children}</g>
+    </>
+  );
+}
+
+/* ----------------------------------------------------------------------------- wordmarks */
+
+/** Medidas do wordmark (altura-x 60): traço 12, elipses largas, "a" de um andar. */
+const W = 12;
+const CUT = 7; // abertura única do corte
+const G = (() => {
+  const ro = 33;
+  const rx = ro - W / 2;
+  const ry = 30 - W / 2;
+  const top = -(60 - W / 2);
+  const stem = 2 * ro + 9 + W / 2;
+  const armEnd = stem + 22;
+  const aCx = armEnd + 14 + ro;
+  return { ro, rx, ry, top, oCx: ro, stem, armEnd, aCx, aStem: aCx + ro - W / 2, iStem: armEnd + 13 + W / 2, armY: top + 20 };
+})();
+
+const OShape = () => (
+  <Notch cx={G.oCx} rx={G.rx} wall={W} gap={CUT} depth={8} side="r">
+    <ellipse cx={G.oCx} cy={-30} rx={G.rx} ry={G.ry} />
+  </Notch>
+);
+const RShape = () => (
+  <>
+    <path d={`M${G.stem} 0V-60`} />
+    <path d={`M${G.stem} ${G.armY}A22 20 0 0 1 ${G.armEnd} ${G.top}`} />
+  </>
+);
+
+/** ora */
+export function Wordmark({ className, style, title = "ora", ink }: MarkProps) {
+  return (
+    <svg viewBox={`-1 -62 ${G.aStem + W / 2 + 3} 64`} role="img" aria-label={title} className={className} style={{ ...(ink ? { color: ink } : null), ...style }}>
+      <g {...stroke(W)}>
+        <OShape />
+        <RShape />
+        <ellipse cx={G.aCx} cy={-30} rx={G.rx} ry={G.ry} />
+        <path d={`M${G.aStem} 0V-60`} />
+      </g>
     </svg>
   );
 }
 
-export function Monogram({ className, title = "gabi" }: { className?: string; title?: string }) {
+/** ori: mesmas letras e o mesmo entalhe; o ponto do "i" é a cor da assistente */
+export function OriWordmark({ className, style, title = "ori", ink, accent = ORI }: MarkProps) {
   return (
-    <svg viewBox="1.6 -52.8 125.6 153.1" role="img" aria-label={title} className={className}>
-      <path d={BLOCK} fill="currentColor" />
-      <path d={BLOCK_STAR} className="fill-personal" />
+    <svg viewBox={`0 -92 ${G.iStem + W / 2 + 2} 94`} role="img" aria-label={title} className={className} style={{ ...(ink ? { color: ink } : null), ...style }}>
+      <g {...stroke(W)}>
+        <OShape />
+        <RShape />
+        <path d={`M${G.iStem} 0V-60`} />
+      </g>
+      <circle cx={G.iStem} cy={-79} r={W * 0.72} fill={accent} />
+    </svg>
+  );
+}
+
+/* ----------------------------------------------------------------------------- símbolos */
+
+/** Quadrado arredondado opcional; o símbolo fica na cor `bg` sobre o quadrado. */
+function Frame({ tile, ink, bg, children }: { tile?: boolean; ink?: string; bg?: string; children: ReactNode }) {
+  return (
+    <>
+      {tile && <rect width={100} height={100} rx={22} fill={ink ?? "currentColor"} />}
+      <g style={{ color: tile ? (bg ?? BG) : undefined }}>{children}</g>
+    </>
+  );
+}
+
+/** Ícone da ora: o "a" de um andar com o entalhe por fora, na parede esquerda do bojo. */
+export function Monogram({ className, style, title = "ora", tile, ink, bg }: IconProps) {
+  return (
+    <svg viewBox="0 0 100 100" role="img" aria-label={title} className={className} style={{ ...(!tile && ink ? { color: ink } : null), ...style }}>
+      <Frame tile={tile} ink={ink} bg={bg}>
+        <g transform="translate(50 50) scale(.82) translate(-30 30)" {...stroke(16)}>
+          <Notch cx={30} rx={22} wall={16} gap={CUT} depth={9} side="l"><circle cx={30} cy={-30} r={22} /></Notch>
+          <path d="M52 0V-60" />
+        </g>
+      </Frame>
+    </svg>
+  );
+}
+
+/** Ícone da ori: o anel com o mesmo entalhe (na parede direita) e o ponto de cor no canto. */
+export function OriMonogram({ className, style, title = "ori", tile, crop, ink, bg, accent = ORI }: IconProps & { crop?: boolean }) {
+  if (crop && !tile) {
+    // só o símbolo, sem a margem do quadrado: para ícones de navegação
+    return (
+      <svg viewBox="-1 -76 86 77" role="img" aria-label={title} className={className} style={{ ...(ink ? { color: ink } : null), ...style }}>
+        <g {...stroke(16)}>
+          <Notch cx={30} rx={22} wall={16} gap={CUT} depth={9} side="r"><circle cx={30} cy={-30} r={22} /></Notch>
+        </g>
+        <circle cx={73} cy={-64} r={11} fill={accent} />
+      </svg>
+    );
+  }
+  return (
+    <svg viewBox="0 0 100 100" role="img" aria-label={title} className={className} style={{ ...(!tile && ink ? { color: ink } : null), ...style }}>
+      <Frame tile={tile} ink={ink} bg={bg}>
+        <g transform="translate(50 50) scale(.66) translate(-42 38)">
+          <g {...stroke(16)}>
+            <Notch cx={30} rx={22} wall={16} gap={CUT} depth={9} side="r"><circle cx={30} cy={-30} r={22} /></Notch>
+          </g>
+          <circle cx={73} cy={-64} r={11} fill={accent} />
+        </g>
+      </Frame>
     </svg>
   );
 }

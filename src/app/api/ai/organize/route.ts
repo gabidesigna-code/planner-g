@@ -16,7 +16,7 @@ export const POST = route(async (request) => {
   const text = body.text.trim();
   if (!text) throw new ValidationError("Escreva o que você precisa organizar.");
   if (text.length > MAX_AI_TEXT) throw new ValidationError(`Texto longo demais (máximo ${MAX_AI_TEXT} caracteres).`);
-  if (!isAiConfigured()) return json({ error: "A IA ainda não está configurada: falta a GEMINI_API_KEY no servidor." }, 503);
+  if (!isAiConfigured()) return json({ error: "A ori ainda não está configurada: falta a GEMINI_API_KEY no servidor." }, 503);
 
   try {
     const items = await organizeWithGemini(text, await listCategories());

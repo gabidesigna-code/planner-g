@@ -4,6 +4,9 @@
 
 /* As cores (tokens) vêm de src/theme/palettes.ts, geradas como variáveis CSS pelo layout. */
 @layer base {
+  /* Cor da ori (assistente): ultramar, a mesma em todas as paletas. #2F44FF no claro, #9AA6FF no escuro. */
+  :root { --ori: 234 100% 59%; --ori-on-primary: 233 100% 80%; }
+  :root.dark { --ori: 233 100% 80%; --ori-on-primary: 234 100% 59%; }
   * { @apply border-border; }
   html { font-size: 16px; -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; -webkit-text-size-adjust: 100%; }
   body { @apply bg-background font-sans text-foreground; overflow-x: clip; -webkit-tap-highlight-color: transparent; }

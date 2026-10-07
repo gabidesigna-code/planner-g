@@ -3,10 +3,10 @@
 import { CalendarDays, Columns3, Check, ListChecks, PanelLeftClose, PanelLeftOpen, Palette, Sun, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "./theme-toggle";
-import { Monogram, Wordmark } from "./brand/logo";
+import { Monogram, OriMonogram, Wordmark } from "./brand/logo";
 import type { ViewId } from "@/lib/app-context";
 
-interface Item { id: ViewId; label: string; icon?: LucideIcon; dot?: string; key: string }
+interface Item { id: ViewId; label: string; icon?: LucideIcon; dot?: string; key: string; /** usa o símbolo oficial da ori no lugar de um ícone */ ori?: boolean }
 
 const GROUPS: Item[][] = [
   [
@@ -14,6 +14,7 @@ const GROUPS: Item[][] = [
     { id: "semana", label: "Semana", icon: Columns3, key: "S" },
     { id: "calendario", label: "Calendário", icon: CalendarDays, key: "C" },
     { id: "tarefas", label: "Tarefas", icon: ListChecks, key: "T" },
+    { id: "ori", label: "Ori", ori: true, key: "O" },
   ],
   [
     { id: "trabalho", label: "Trabalho", dot: "bg-work", key: "W" },
@@ -34,15 +35,15 @@ interface Props {
 
 export function Sidebar({ view, collapsed, touch, onNavigate, onToggleCollapsed, onOpenAppearance }: Props) {
   return (
-    <div className={cn("pb-safe flex h-full flex-col px-2.5 py-4", !touch && "lg:px-4 lg:py-7 xl:px-5 xl:py-8")}>
+    <div className={cn("pb-safe flex h-full flex-col px-2.5 py-4", !touch && (collapsed ? "lg:py-7 xl:py-8" : "lg:px-4 lg:py-7 xl:px-5 xl:py-8"))}>
       <div className={cn("mb-6 flex h-10 items-center text-foreground", !touch && "lg:mb-12 lg:h-14 xl:mb-14 xl:h-16", collapsed ? "justify-center" : cn("px-2.5", !touch && "lg:px-4"))}>
-        {collapsed ? <Monogram className="h-[2.125rem] w-auto" /> : <Wordmark className={cn("h-[1.5rem] w-auto", !touch && "lg:h-[2.3125rem] xl:h-[2.6875rem]")} />}
+        {collapsed ? <Monogram tile className="h-[2.25rem] w-[2.25rem] shrink-0" /> : <Wordmark className={cn("h-[1.5rem] w-auto", !touch && "lg:h-[2.3125rem] xl:h-[2.6875rem]")} />}
       </div>
 
       <nav aria-label="Principal" className="flex flex-col">
         {GROUPS.map((group, gi) => (
           <div key={gi} className={cn("flex flex-col gap-0.5", !touch && "lg:gap-1.5", gi > 0 && "mt-3 border-t border-border/80 pt-3", gi > 0 && !touch && "lg:mt-6 lg:pt-6 xl:mt-7 xl:pt-7")}>
-            {group.map(({ id, label, icon: Icon, dot, key }) => {
+            {group.map(({ id, label, icon: Icon, dot, key, ori }) => {
               const active = id === view;
               return (
                 <button
@@ -57,7 +58,7 @@ export function Sidebar({ view, collapsed, touch, onNavigate, onToggleCollapsed,
                   )}
                 >
                   <span className={cn("grid h-4 w-4 shrink-0 place-items-center", !touch && "lg:h-6 lg:w-6")}>
-                    {Icon ? <Icon className={cn("h-[0.9375rem] w-[0.9375rem]", !touch && "lg:h-[1.1875rem] lg:w-[1.1875rem] xl:h-[1.3125rem] xl:w-[1.3125rem]")} strokeWidth={1.7} /> : <span className={cn("h-2 w-2 rounded-full", dot, active && "ring-2 ring-primary-foreground/80")} />}
+                    {ori ? <OriMonogram crop accent={active ? "hsl(var(--ori-on-primary))" : undefined} className="h-[0.95rem] w-auto lg:h-[1.1rem] xl:h-[1.25rem]" /> : Icon ? <Icon className={cn("h-[0.9375rem] w-[0.9375rem]", !touch && "lg:h-[1.1875rem] lg:w-[1.1875rem] xl:h-[1.3125rem] xl:w-[1.3125rem]")} strokeWidth={1.7} /> : <span className={cn("h-2 w-2 rounded-full", dot, active && "ring-2 ring-primary-foreground/80")} />}
                   </span>
                   {!collapsed && <span className="flex-1 text-left">{label}</span>}
                   {!collapsed && !touch && <span className="kbd opacity-0 transition-opacity group-hover:opacity-100">G {key}</span>}

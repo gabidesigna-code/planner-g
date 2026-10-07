@@ -21,6 +21,7 @@ const config: Config = {
         ring: c("ring"),
         primary: { DEFAULT: c("primary"), foreground: c("primary-foreground") },
         work: { DEFAULT: c("work"), soft: c("work-soft"), foreground: c("work-foreground") },
+        ori: c("ori"),
         personal: { DEFAULT: c("personal"), soft: c("personal-soft"), foreground: c("personal-foreground") },
         cool: c("cool"),
         waiting: { DEFAULT: c("waiting"), soft: c("waiting-soft") },

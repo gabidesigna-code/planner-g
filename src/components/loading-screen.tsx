@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 export function LoadingScreen() {
   return (
     <div className="grid min-h-[100dvh] place-items-center" role="status" aria-label="Carregando">
-      <Monogram className="h-9 w-[1.875rem] animate-pulse text-foreground/60" />
+      <Monogram tile className="h-12 w-12 animate-pulse opacity-70" />
     </div>
   );
 }
@@ -15,7 +15,7 @@ export function LoadErrorScreen({ message, onRetry }: { message: string; onRetry
   return (
     <div className="grid min-h-[100dvh] place-items-center px-5">
       <div className="max-w-[22.5rem] text-center">
-        <Monogram className="mx-auto h-9 w-[1.875rem] text-foreground/70" />
+        <Monogram tile className="mx-auto h-12 w-12 opacity-80" />
         <h1 className="mt-6 text-[1.375rem] font-semibold tracking-[-0.03em]">Não consegui abrir a sua agenda.</h1>
         <p className="mt-2 text-[0.8438rem] leading-relaxed text-muted-foreground">
           Verifique a conexão e tente de novo. Seus dados continuam guardados.

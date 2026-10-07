@@ -1,4 +1,4 @@
-# gabi · banco de dados (Supabase) para uso individual
+# ora · banco de dados (Supabase) para uso individual
 
 O app é de uma pessoa só. Não há login, cadastro nem usuários. O Supabase serve de **banco na nuvem**
 para o PC e o celular verem os mesmos dados.

@@ -2,11 +2,12 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
-  Bell, CalendarDays, Sparkles, Columns3, Check, Clock, Diamond, ListChecks, Moon, Palette, SlidersHorizontal, Square, Sun, PanelLeft,
+  Bell, CalendarDays, Columns3, Check, Clock, Diamond, ListChecks, Moon, Palette, SlidersHorizontal, Square, Sun, PanelLeft,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CTX } from "@/lib/context";
+import { OriMonogram } from "@/components/brand/logo";
 import { diffDays, fromMin, longDay, pad2, toMin } from "@/lib/dates";
 import { parseQuick } from "@/lib/parse";
 import { useTheme } from "@/theme/theme-provider";
@@ -17,13 +18,18 @@ interface Entry {
   id: string;
   label: string;
   hint?: string;
-  icon: LucideIcon;
+  icon: IconComponent;
   shortcut?: string;
   run: () => void;
   dot?: string;
   /** Abre o formulário completo (só nas opções de adicionar) */
   details?: () => void;
 }
+
+/** Qualquer ícone que aceite className: os do lucide e o símbolo da ori */
+type IconComponent = (props: { className?: string; strokeWidth?: number }) => React.ReactNode;
+
+const OriIcon: IconComponent = ({ className }) => <OriMonogram tile className={className} />;
 
 const TYPES: { kind: Kind; label: string; icon: LucideIcon }[] = [
   { kind: "tarefa", label: "Tarefa", icon: Square },
@@ -32,7 +38,7 @@ const TYPES: { kind: Kind; label: string; icon: LucideIcon }[] = [
   { kind: "evento", label: "Evento", icon: Diamond },
 ];
 
-/** Opções de "adicionar" no topo da lista: os 4 tipos + Organizar com IA */
+/** Opções de "adicionar" no topo da lista: os 4 tipos + Organizar com ori */
 const ADD_COUNT = TYPES.length + 1;
 
 export function CommandMenu({ open, preset, defaultContext, onClose, onCreate, onToggleSidebar, onOpenAi }: {
@@ -42,7 +48,7 @@ export function CommandMenu({ open, preset, defaultContext, onClose, onCreate, o
   onClose: () => void;
   onCreate: (t: Task) => void;
   onToggleSidebar: () => void;
-  /** Abre o painel "Organizar com IA" (com o texto digitado, se houver) */
+  /** Abre o painel "Organizar com ori" (com o texto digitado, se houver) */
   onOpenAi: (text: string) => void;
 }) {
   const { today, navigate, openForm, openAppearance } = useApp();
@@ -105,14 +111,14 @@ export function CommandMenu({ open, preset, defaultContext, onClose, onCreate, o
     }));
     adds.push({
       id: "ai",
-      label: "Organizar com IA",
+      label: "Organizar com ori",
       hint: query.trim() ? `“${query.trim()}”` : "Escreva uma frase; você confirma antes de salvar",
-      icon: Sparkles,
+      icon: OriIcon,
       shortcut: `⌘${TYPES.length + 1}`,
       run: () => { onOpenAi(query.trim()); onClose(); },
     });
     if (query.trim()) return adds;
-    const go = (v: ViewId, label: string, icon: LucideIcon, shortcut: string, dot?: string): Entry => ({
+    const go = (v: ViewId, label: string, icon: IconComponent, shortcut: string, dot?: string): Entry => ({
       id: v, label: `Ir para ${label}`, icon, shortcut, dot, run: () => { navigate(v); onClose(); },
     });
     return [
@@ -121,6 +127,7 @@ export function CommandMenu({ open, preset, defaultContext, onClose, onCreate, o
       go("semana", "Semana", Columns3, "G S"),
       go("calendario", "Calendário", CalendarDays, "G C"),
       go("tarefas", "Tarefas", ListChecks, "G T"),
+      go("ori", "Ori", OriIcon, "G O"),
       go("trabalho", "Trabalho", Square, "G W", CTX.trabalho.dot),
       go("pessoal", "Pessoal", Square, "G P", CTX.pessoal.dot),
       go("concluidos", "Concluídos", Check, "G D"),
