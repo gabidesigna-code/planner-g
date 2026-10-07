@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
-  Bell, CalendarDays, Columns3, Check, Clock, Diamond, ListChecks, Moon, Palette, SlidersHorizontal, Square, Sun, PanelLeft,
+  Bell, CalendarDays, Sparkles, Columns3, Check, Clock, Diamond, ListChecks, Moon, Palette, SlidersHorizontal, Square, Sun, PanelLeft,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -32,13 +32,18 @@ const TYPES: { kind: Kind; label: string; icon: LucideIcon }[] = [
   { kind: "evento", label: "Evento", icon: Diamond },
 ];
 
-export function CommandMenu({ open, preset, defaultContext, onClose, onCreate, onToggleSidebar }: {
+/** Opções de "adicionar" no topo da lista: os 4 tipos + Organizar com IA */
+const ADD_COUNT = TYPES.length + 1;
+
+export function CommandMenu({ open, preset, defaultContext, onClose, onCreate, onToggleSidebar, onOpenAi }: {
   open: boolean;
   preset: AddPreset;
   defaultContext: Context;
   onClose: () => void;
   onCreate: (t: Task) => void;
   onToggleSidebar: () => void;
+  /** Abre o painel "Organizar com IA" (com o texto digitado, se houver) */
+  onOpenAi: (text: string) => void;
 }) {
   const { today, navigate, openForm, openAppearance } = useApp();
   const { toggleMode } = useTheme();
@@ -98,6 +103,14 @@ export function CommandMenu({ open, preset, defaultContext, onClose, onCreate, o
       run: create(t.kind),
       details: details(t.kind),
     }));
+    adds.push({
+      id: "ai",
+      label: "Organizar com IA",
+      hint: query.trim() ? `“${query.trim()}”` : "Escreva uma frase; você confirma antes de salvar",
+      icon: Sparkles,
+      shortcut: `⌘${TYPES.length + 1}`,
+      run: () => { onOpenAi(query.trim()); onClose(); },
+    });
     if (query.trim()) return adds;
     const go = (v: ViewId, label: string, icon: LucideIcon, shortcut: string, dot?: string): Entry => ({
       id: v, label: `Ir para ${label}`, icon, shortcut, dot, run: () => { navigate(v); onClose(); },
@@ -115,7 +128,7 @@ export function CommandMenu({ open, preset, defaultContext, onClose, onCreate, o
       { id: "theme", label: "Alternar claro/escuro", icon: Moon, shortcut: "⇧D", run: () => { toggleMode(); onClose(); } },
       { id: "sidebar", label: "Recolher/expandir menu", icon: PanelLeft, shortcut: "[", run: () => { onToggleSidebar(); onClose(); } },
     ];
-  }, [parsed.title, query, when, ctx, time, dueDate, onCreate, onClose, navigate, openForm, openAppearance, toggleMode, onToggleSidebar]);
+  }, [parsed.title, query, when, ctx, time, dueDate, onCreate, onClose, navigate, openForm, openAppearance, toggleMode, onToggleSidebar, onOpenAi]);
 
   if (!open) return null;
 
@@ -126,7 +139,7 @@ export function CommandMenu({ open, preset, defaultContext, onClose, onCreate, o
     else if (e.key === "ArrowUp") { e.preventDefault(); setIdx((i) => (i - 1 + entries.length) % entries.length); }
     else if (e.key === "Enter") { e.preventDefault(); const en = entries[safeIdx]; if (e.shiftKey && en?.details) en.details(); else en?.run(); }
     else if (e.key === "Tab") { e.preventDefault(); setCtx((c) => (c === "trabalho" ? "pessoal" : "trabalho")); }
-    else if ((e.metaKey || e.ctrlKey) && /^[1-4]$/.test(e.key)) { e.preventDefault(); entries[Number(e.key) - 1]?.run(); }
+    else if ((e.metaKey || e.ctrlKey) && /^[1-5]$/.test(e.key)) { e.preventDefault(); entries[Number(e.key) - 1]?.run(); }
   }
 
   return (
@@ -154,10 +167,10 @@ export function CommandMenu({ open, preset, defaultContext, onClose, onCreate, o
         <ul className="scroll-thin max-h-[52vh] sm:max-h-[21.25rem] overflow-y-auto border-t border-border p-1.5">
           {entries.map((en, i) => {
             const Icon = en.icon;
-            const isAdd = i < TYPES.length;
+            const isAdd = i < ADD_COUNT;
             return (
               <li key={en.id}>
-                {i === TYPES.length && <p className="label-mono px-3 pb-1 pt-3 text-[0.625rem]">Navegar</p>}
+                {i === ADD_COUNT && <p className="label-mono px-3 pb-1 pt-3 text-[0.625rem]">Navegar</p>}
                 <div className={cn("flex items-center rounded-lg transition-colors duration-75", i === safeIdx && "bg-hover")}>
                 <button
                   onMouseEnter={() => setIdx(i)}

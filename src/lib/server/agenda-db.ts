@@ -68,6 +68,11 @@ async function loadCategoryRows(db: Db): Promise<CategoryRow[]> {
   return read();
 }
 
+/** Categorias do usuário (nome e contexto), para a IA escolher entre elas. */
+export async function listCategories(): Promise<{ name: string; context: string }[]> {
+  return (await loadCategoryRows(getAdmin())).map((c) => ({ name: c.name, context: c.context }));
+}
+
 async function categoryIndex(db: Db) {
   return new CategoryIndex((await loadCategoryRows(db)).map(categoryFromRow));
 }

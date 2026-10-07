@@ -11,6 +11,7 @@ import { Wordmark } from "./brand/logo";
 import { SidePanel } from "@/features/task-details/side-panel";
 import { CommandMenu } from "@/features/add/command-menu";
 import { TaskForm } from "@/features/task-form/task-form";
+import { AiPanel } from "@/features/ai/ai-panel";
 import { HomeView } from "@/features/home/home-view";
 import { WeekView } from "@/features/week/week-view";
 import { CalendarView } from "@/features/calendar/calendar-view";
@@ -43,6 +44,7 @@ export function AppShell() {
   const [menu, setMenu] = useState<{ open: boolean; preset: AddPreset }>({ open: false, preset: {} });
   const [form, setForm] = useState<{ open: boolean; kind: Kind; preset: AddPreset }>({ open: false, kind: "tarefa", preset: {} });
   const [appearance, setAppearance] = useState(false);
+  const [ai, setAi] = useState({ open: false, text: "" });
   const { toggleMode } = useTheme();
   const [now, setNow] = useState<Date | null>(null);
   const today = useMemo(() => startOfDay(), []);
@@ -75,6 +77,8 @@ export function AppShell() {
   const closeMenu = useCallback(() => setMenu((m) => ({ ...m, open: false })), []);
   const openForm = useCallback((kind: Kind, preset: AddPreset = {}) => setForm({ open: true, kind, preset }), []);
   const closeForm = useCallback(() => setForm((f) => ({ ...f, open: false })), []);
+  const openAi = useCallback((text = "") => setAi({ open: true, text }), []);
+  const closeAi = useCallback(() => setAi((a) => ({ ...a, open: false })), []);
   const openAppearance = useCallback(() => { setMobileNav(false); setAppearance(true); }, []);
 
   // Atalhos de teclado
@@ -88,14 +92,15 @@ export function AppShell() {
       const el = e.target as HTMLElement;
       const typing = el.matches?.("input, textarea, select, [contenteditable]");
       if (e.key === "Escape") {
-        if (appearance) setAppearance(false);
+        if (ai.open) closeAi();
+        else if (appearance) setAppearance(false);
         else if (form.open) closeForm();
         else if (menu.open) closeMenu();
         else if (mobileNav) setMobileNav(false);
         else setSelectedId(null);
         return;
       }
-      if (typing || menu.open || form.open || appearance) return;
+      if (typing || menu.open || form.open || appearance || ai.open) return;
       const k = e.key.toLowerCase();
       if (gPending.current) {
         gPending.current = false;
@@ -104,6 +109,7 @@ export function AppShell() {
       }
       if (k === "g") { gPending.current = true; window.setTimeout(() => (gPending.current = false), 900); }
       else if (k === "n" || k === "c" || k === "/") { e.preventDefault(); openAdd(); }
+      else if (k === "i") { e.preventDefault(); openAi(); }
       else if (k === "[") toggleCollapsed();
       else if (k === "1") setFilter("tudo");
       else if (k === "2") setFilter("trabalho");
@@ -112,7 +118,7 @@ export function AppShell() {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [menu.open, form.open, appearance, mobileNav, openAdd, closeMenu, closeForm, navigate, toggleCollapsed, toggleMode]);
+  }, [menu.open, form.open, appearance, ai.open, mobileNav, openAi, closeAi, openAdd, closeMenu, closeForm, navigate, toggleCollapsed, toggleMode]);
 
   if (loadError && !ready) return <LoadErrorScreen message={loadError} onRetry={reload} />;
   if (!ready) return <LoadingScreen />;
@@ -180,7 +186,9 @@ export function AppShell() {
           onClose={closeMenu}
           onCreate={create}
           onToggleSidebar={toggleCollapsed}
+          onOpenAi={openAi}
         />
+        <AiPanel open={ai.open} initialText={ai.text} onClose={closeAi} onCreate={create} />
         <TaskForm open={form.open} kind={form.kind} preset={form.preset} today={today} now={now} onClose={closeForm} onSubmit={create} />
         <AppearanceSheet open={appearance} onClose={() => setAppearance(false)} />
         <SyncBar saving={saving} />
