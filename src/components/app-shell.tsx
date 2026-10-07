@@ -136,13 +136,13 @@ export function AppShell() {
   return (
     <AppCtx.Provider value={api}>
       <div className="min-h-screen">
-        <aside className={cn("fixed inset-y-0 left-0 z-20 hidden bg-sidebar transition-[width] duration-200 ease-out lg:block", collapsed ? "w-14" : "w-52")}>
+        <aside className={cn("fixed inset-y-0 left-0 z-20 hidden bg-sidebar transition-[width] duration-200 ease-out lg:block", collapsed ? "w-14" : "w-52 lg:w-[15.5rem] xl:w-[16rem] 2xl:w-[14.75rem]")}>
           <Sidebar view={view} collapsed={collapsed} onNavigate={navigate} onToggleCollapsed={toggleCollapsed} onOpenAppearance={openAppearance} />
         </aside>
 
         <div className="sticky top-0 z-20 flex items-center justify-between bg-background/85 px-3 py-2 backdrop-blur lg:hidden">
-          <Button variant="ghost" size="icon" onClick={() => setMobileNav(true)} aria-label="Abrir menu" aria-expanded={mobileNav}><Menu className="h-[18px] w-[18px]" /></Button>
-          <Wordmark className="h-[22px] w-auto text-foreground" />
+          <Button variant="ghost" size="icon" onClick={() => setMobileNav(true)} aria-label="Abrir menu" aria-expanded={mobileNav}><Menu className="h-[1.125rem] w-[1.125rem]" /></Button>
+          <Wordmark className="h-[1.375rem] w-auto text-foreground" />
           <span className="w-10" />
         </div>
 
@@ -160,7 +160,7 @@ export function AppShell() {
           </aside>
         </div>
 
-        <main className={cn("transition-[padding] duration-200 ease-out", collapsed ? "lg:pl-14" : "lg:pl-52")}>{content}</main>
+        <main className={cn("transition-[padding] duration-200 ease-out", collapsed ? "lg:pl-14" : "lg:pl-[15.5rem] xl:pl-[16rem] 2xl:pl-[14.75rem]")}>{content}</main>
 
         {/* Botão flutuante: adicionar ao alcance do polegar (só no celular) */}
         <button

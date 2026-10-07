@@ -37,7 +37,7 @@ export function WeekView() {
   };
 
   return (
-    <div className="mx-auto w-full max-w-6xl px-4 pb-36 pt-6 sm:px-8 sm:pt-16">
+    <div className="mx-auto w-full max-w-6xl px-4 pb-36 pt-6 sm:px-8 lg:px-10 xl:max-w-7xl xl:px-12 2xl:max-w-[87.5rem] sm:pt-16">
       <ViewHeader
         eyebrow="Semana"
         title={`${pad2(days[0].getDate())} ${monAbbr(days[0])} – ${pad2(days[6].getDate())} ${monAbbr(days[6])}`.toUpperCase()}
@@ -64,7 +64,7 @@ export function WeekView() {
               onDragLeave={() => setOver(null)}
               onDrop={(e) => drop(e, day)}
               className={cn(
-                "group/day min-h-[120px] border-t border-border px-1 py-3 transition-colors duration-150 lg:min-h-[360px] lg:border-l lg:border-t-0 lg:px-3 lg:first:border-l-0",
+                "group/day min-h-[7.5rem] border-t border-border px-1 py-3 transition-colors duration-150 lg:min-h-[22.5rem] lg:border-l lg:border-t-0 lg:px-3 lg:first:border-l-0",
                 over === key && "bg-hover",
               )}
             >
@@ -72,17 +72,17 @@ export function WeekView() {
                 <span className="label-mono">{weekdayShort(day)}</span>
                 <span
                   className={cn(
-                    "grid h-8 min-w-8 place-items-center rounded-full px-1 text-[20px] font-semibold tabular-nums tracking-tight",
+                    "grid h-8 min-w-8 place-items-center rounded-full px-1 text-[1.25rem] font-semibold tabular-nums tracking-tight",
                     isToday ? "bg-primary text-primary-foreground" : "text-foreground/80",
                   )}
                 >
                   {pad2(day.getDate())}
                 </span>
                 <div className="flex min-w-0 flex-1 flex-col gap-1.5 lg:w-full lg:flex-none" title="Carga do dia">
-                  <span className={cn("font-mono text-[11px] tabular-nums text-muted-foreground", heavy && "font-medium text-waiting")}>
+                  <span className={cn("font-mono text-[0.6875rem] tabular-nums text-muted-foreground", heavy && "font-medium text-waiting")}>
                     {load.count === 0 ? "livre" : `${load.count} ${load.count === 1 ? "item" : "itens"}${load.mins ? ` · ${formatDuration(load.mins)}` : ""}`}
                   </span>
-                  <span className="h-[3px] overflow-hidden rounded-full bg-muted">
+                  <span className="h-[0.1875rem] overflow-hidden rounded-full bg-muted">
                     <span className={cn("block h-full rounded-full transition-[width] duration-300", heavy ? "bg-waiting" : "bg-foreground/40")} style={{ width: `${(load.weight / maxWeight) * 100}%` }} />
                   </span>
                 </div>
@@ -106,9 +106,9 @@ export function WeekView() {
                       t.status === "concluido" && "opacity-45",
                     )}
                   >
-                    <span className={cn("absolute inset-y-1.5 left-0 w-[2px] rounded-full", CTX[t.context].bar)} />
-                    {t.time && <span className="block font-mono text-[10.5px] tabular-nums text-muted-foreground">{t.time}</span>}
-                    <span className={cn("block text-[14px] leading-snug lg:text-[13px]", t.status === "concluido" && "line-through")}>{t.title}</span>
+                    <span className={cn("absolute inset-y-1.5 left-0 w-[0.125rem] rounded-full", CTX[t.context].bar)} />
+                    {t.time && <span className="block font-mono text-[0.6563rem] tabular-nums text-muted-foreground">{t.time}</span>}
+                    <span className={cn("block text-[0.875rem] leading-snug lg:text-[0.8125rem]", t.status === "concluido" && "line-through")}>{t.title}</span>
                   </button>
                 ))}
               </div>

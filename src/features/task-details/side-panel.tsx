@@ -14,12 +14,12 @@ import {
 } from "@/types";
 
 const prop =
-  "h-10 w-full rounded-md bg-transparent px-2 text-[13.5px] sm:h-8 transition-colors duration-100 placeholder:text-muted-foreground/50 hover:bg-hover focus:bg-hover focus:outline-none";
+  "h-10 w-full rounded-md bg-transparent px-2 text-[0.8438rem] sm:h-8 transition-colors duration-100 placeholder:text-muted-foreground/50 hover:bg-hover focus:bg-hover focus:outline-none";
 
 function Row({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div className="grid grid-cols-[84px_1fr] items-center gap-2">
-      <span className="label-mono text-[10px] tracking-[0.14em]">{label}</span>
+      <span className="label-mono text-[0.625rem] tracking-[0.14em]">{label}</span>
       <div className="min-w-0">{children}</div>
     </div>
   );
@@ -58,10 +58,10 @@ function PanelBody({ task }: { task: Task }) {
     <aside
       role="dialog"
       aria-label="Detalhes"
-      className="scroll-thin animate-sheetUp sm:animate-slideIn fixed inset-x-0 bottom-0 z-40 flex max-h-[92dvh] flex-col overflow-y-auto overscroll-contain rounded-t-2xl border-t border-border bg-surface shadow-pop sm:inset-x-auto sm:inset-y-0 sm:right-0 sm:max-h-none sm:w-[420px] sm:rounded-none sm:border-l sm:border-t-0"
+      className="scroll-thin animate-sheetUp sm:animate-slideIn fixed inset-x-0 bottom-0 z-40 flex max-h-[92dvh] flex-col overflow-y-auto overscroll-contain rounded-t-2xl border-t border-border bg-surface shadow-pop sm:inset-x-auto sm:inset-y-0 sm:right-0 sm:max-h-none sm:w-[26.25rem] sm:rounded-none sm:border-l sm:border-t-0"
     >
       <div className="flex items-center justify-between px-5 pt-4">
-        <div className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
+        <div className="flex items-center gap-2 font-mono text-[0.6875rem] uppercase tracking-[0.16em] text-muted-foreground">
           <span className={cn("h-2 w-2 rounded-full", ctx.dot)} />
           {ctx.label} · {KIND_LABEL[task.kind]}
         </div>
@@ -86,7 +86,7 @@ function PanelBody({ task }: { task: Task }) {
       </div>
 
       <div className="flex items-start gap-3 px-5 pb-5 pt-5">
-        <span className="mt-[7px]">
+        <span className="mt-[0.4375rem]">
           <Checkbox checked={done} tone={task.context} onCheckedChange={() => toggle(task.id)} aria-label="Concluir" />
         </span>
         <textarea
@@ -97,7 +97,7 @@ function PanelBody({ task }: { task: Task }) {
             if (el) { el.style.height = "auto"; el.style.height = `${el.scrollHeight}px`; }
           }}
           className={cn(
-            "keep-size w-full resize-none overflow-hidden bg-transparent text-[22px] font-semibold leading-tight tracking-[-0.025em] focus:outline-none",
+            "keep-size w-full resize-none overflow-hidden bg-transparent text-[1.375rem] font-semibold leading-tight tracking-[-0.025em] focus:outline-none",
             done && "text-muted-foreground line-through decoration-muted-foreground/40",
           )}
         />
@@ -118,7 +118,7 @@ function PanelBody({ task }: { task: Task }) {
               <button
                 key={label}
                 onClick={() => set({ due: to, endDate: task.endDate ? new Date(to.getTime() + (task.endDate.getTime() - task.due.getTime())) : undefined })}
-                className="h-10 rounded-md px-2.5 text-[13px] text-muted-foreground ring-1 ring-border transition-colors hover:bg-hover hover:text-foreground sm:h-8 sm:px-2"
+                className="h-10 rounded-md px-2.5 text-[0.8125rem] text-muted-foreground ring-1 ring-border transition-colors hover:bg-hover hover:text-foreground sm:h-8 sm:px-2"
               >
                 {label}
               </button>
@@ -149,7 +149,7 @@ function PanelBody({ task }: { task: Task }) {
                 key={c}
                 onClick={() => set({ context: c, category: categoryNames(c).includes(task.category) ? task.category : "Outros", client: c === "pessoal" ? undefined : task.client })}
                 className={cn(
-                  "flex h-10 items-center gap-2 rounded-md px-3 text-[13.5px] sm:h-8 sm:px-2.5 transition-colors",
+                  "flex h-10 items-center gap-2 rounded-md px-3 text-[0.8438rem] sm:h-8 sm:px-2.5 transition-colors",
                   task.context === c ? "bg-hover font-medium" : "text-muted-foreground hover:bg-hover",
                 )}
               >
@@ -175,7 +175,7 @@ function PanelBody({ task }: { task: Task }) {
                 key={p}
                 onClick={() => set({ priority: p })}
                 className={cn(
-                  "h-10 rounded-md px-2.5 text-[13px] transition-colors sm:h-8 sm:px-2",
+                  "h-10 rounded-md px-2.5 text-[0.8125rem] transition-colors sm:h-8 sm:px-2",
                   task.priority === p
                     ? p === "urgente" ? "bg-urgent-soft font-medium text-urgent" : "bg-hover font-medium"
                     : "text-muted-foreground hover:bg-hover hover:text-foreground",
@@ -206,23 +206,23 @@ function PanelBody({ task }: { task: Task }) {
       </div>
 
       <div className="border-t border-border px-5 py-4">
-        <p className="label-mono mb-2 text-[10px] tracking-[0.14em]">Observações</p>
+        <p className="label-mono mb-2 text-[0.625rem] tracking-[0.14em]">Observações</p>
         <textarea
           value={task.note ?? ""}
           onChange={(e) => set({ note: e.target.value || undefined })}
           placeholder="Adicionar observação…"
           rows={3}
-          className="scroll-thin -mx-2 w-[calc(100%+1rem)] resize-none rounded-md bg-transparent px-2 py-1.5 text-[14px] leading-relaxed transition-colors placeholder:text-muted-foreground/50 hover:bg-hover focus:bg-hover focus:outline-none"
+          className="scroll-thin -mx-2 w-[calc(100%+1rem)] resize-none rounded-md bg-transparent px-2 py-1.5 text-[0.875rem] leading-relaxed transition-colors placeholder:text-muted-foreground/50 hover:bg-hover focus:bg-hover focus:outline-none"
         />
       </div>
 
       <div className="border-t border-border px-5 py-4 pb-16">
         <div className="mb-2 flex items-center justify-between">
-          <p className="label-mono text-[10px] tracking-[0.14em]">Subtarefas</p>
-          {subs.length > 0 && <span className="font-mono text-[11px] tabular-nums text-muted-foreground">{subsDone} de {subs.length} · {Math.round((subsDone / subs.length) * 100)}%</span>}
+          <p className="label-mono text-[0.625rem] tracking-[0.14em]">Subtarefas</p>
+          {subs.length > 0 && <span className="font-mono text-[0.6875rem] tabular-nums text-muted-foreground">{subsDone} de {subs.length} · {Math.round((subsDone / subs.length) * 100)}%</span>}
         </div>
         {subs.length > 0 && (
-          <div className="mb-3 h-[3px] overflow-hidden rounded-full bg-muted">
+          <div className="mb-3 h-[0.1875rem] overflow-hidden rounded-full bg-muted">
             <div className={cn("h-full rounded-full transition-[width] duration-300", ctx.bar)} style={{ width: `${(subsDone / subs.length) * 100}%` }} />
           </div>
         )}
@@ -230,7 +230,7 @@ function PanelBody({ task }: { task: Task }) {
           {subs.map((s) => (
             <li key={s.id} className="group -mx-2 flex items-center gap-3 rounded-md px-2 py-1.5 hover:bg-hover">
               <Checkbox checked={s.done} tone={task.context} onCheckedChange={() => toggleSub(task.id, s.id)} aria-label={s.title} className="h-4 w-4" />
-              <span className={cn("flex-1 text-[14px]", s.done && "text-muted-foreground line-through decoration-muted-foreground/40")}>{s.title}</span>
+              <span className={cn("flex-1 text-[0.875rem]", s.done && "text-muted-foreground line-through decoration-muted-foreground/40")}>{s.title}</span>
               <button
                 onClick={() => set({ subtasks: subs.filter((x) => x.id !== s.id) })}
                 aria-label="Remover subtarefa"
@@ -248,7 +248,7 @@ function PanelBody({ task }: { task: Task }) {
             onChange={(e) => setNewSub(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && addSub()}
             placeholder="Adicionar subtarefa"
-            className="w-full bg-transparent text-[14px] placeholder:text-muted-foreground/50 focus:outline-none"
+            className="w-full bg-transparent text-[0.875rem] placeholder:text-muted-foreground/50 focus:outline-none"
           />
         </div>
       </div>

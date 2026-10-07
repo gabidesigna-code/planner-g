@@ -36,35 +36,36 @@ export function TaskItem({ task, showDay, showTime, reorderable }: { task: Task;
       })}
       onClick={() => openTask(task.id)}
       className={cn(
-        "group -mx-3 flex cursor-pointer items-start gap-3 rounded-lg px-3 py-3 transition-colors sm:py-2 duration-100 active:cursor-grabbing",
+        "group -mx-3 flex cursor-pointer items-start gap-3 rounded-lg px-3 py-3 transition-colors sm:py-2 lg:py-3 duration-100 active:cursor-grabbing",
         "hover:bg-hover [&[draggable=true]:active]:opacity-60",
         selectedId === task.id && "bg-muted",
         over && "shadow-[inset_0_2px_0_hsl(var(--foreground)/0.4)]",
         done && "opacity-60",
       )}
     >
-      <span className="mt-[2px] shrink-0" onClick={(e) => e.stopPropagation()}>
+      <span className="mt-[0.125rem] shrink-0 lg:mt-[0.125rem]" onClick={(e) => e.stopPropagation()}>
         <Checkbox
           checked={done}
           tone={task.context}
           onCheckedChange={() => toggle(task.id)}
           aria-label={`Concluir ${task.title}`}
+          className="lg:h-5 lg:w-5"
         />
       </span>
 
       <div className="min-w-0 flex-1">
         <p
           className={cn(
-            "truncate text-[15px] leading-[22px] transition-colors duration-200",
+            "truncate text-[0.9375rem] leading-[1.375rem] lg:text-[1rem] lg:leading-[1.5rem] transition-colors duration-200",
             done && "text-muted-foreground line-through decoration-muted-foreground/40",
           )}
         >
           {task.title}
         </p>
-        {sub && <p className="truncate text-[13px] leading-[18px] text-muted-foreground">{sub}</p>}
+        {sub && <p className="truncate text-[0.8125rem] leading-[1.125rem] text-muted-foreground lg:text-[0.8438rem] lg:leading-[1.25rem]">{sub}</p>}
       </div>
 
-      <div className="flex shrink-0 items-center gap-2.5 pt-[5px] font-mono text-[11px] text-muted-foreground">
+      <div className="flex shrink-0 items-center gap-2.5 pt-[0.3125rem] font-mono text-[0.6875rem] text-muted-foreground lg:pt-[0.375rem] lg:text-[0.7813rem]">
         {subs.length > 0 && (
           <span className="tabular-nums">
             {subsDone}/{subs.length}

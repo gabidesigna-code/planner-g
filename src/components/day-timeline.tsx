@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, type DragEvent, type MouseEvent } from "react";
+import { useEffect, useRef, useState, type DragEvent, type MouseEvent } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 import { CTX } from "@/lib/context";
@@ -9,7 +9,21 @@ import { dragProps, draggedId, isTaskDrag } from "@/lib/dnd";
 import { useApp } from "@/lib/app-context";
 import type { Task } from "@/types";
 
-const HOUR_H = 64;
+/** Altura de uma hora na linha do tempo. */
+function useHourHeight() {
+  const [h, setH] = useState(64);
+  useEffect(() => {
+    // Desktop: mais compacto (3,6rem por hora) e proporcional à escala da tela; celular: 64px, como antes
+    const sync = () => {
+      const root = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+      setH(window.innerWidth >= 1024 ? Math.round(3.6 * root) : 64);
+    };
+    sync();
+    window.addEventListener("resize", sync);
+    return () => window.removeEventListener("resize", sync);
+  }, []);
+  return h;
+}
 
 
 interface Ev { t: Task; s: number; e: number; col: number; cols: number }
@@ -52,6 +66,7 @@ function layout(tasks: Task[]): Ev[] {
 /** O dia como tempo: horas na lateral, blocos proporcionais à duração. */
 export function DayTimeline({ tasks }: { tasks: Task[] }) {
   const { today, now, update, openTask, openAdd, toggle } = useApp();
+  const HOUR_H = useHourHeight();
   const ref = useRef<HTMLDivElement>(null);
   const [ghost, setGhost] = useState<number | null>(null);
   const [hover, setHover] = useState<number | null>(null);
@@ -108,7 +123,7 @@ export function DayTimeline({ tasks }: { tasks: Task[] }) {
   return (
     <div
       ref={ref}
-      className="relative mb-2 mt-5 select-none [--g:48px] sm:[--g:56px]"
+      className="relative mb-2 mt-5 select-none lg:mt-3 [--g:3rem] sm:[--g:3.5rem] xl:[--g:4.25rem]"
       style={{ height }}
       onDragOver={onDragOver}
       onDragLeave={(e) => e.currentTarget === e.target && setGhost(null)}
@@ -121,7 +136,7 @@ export function DayTimeline({ tasks }: { tasks: Task[] }) {
         <div key={h} className="pointer-events-none absolute inset-x-0" style={{ top: (h - startH) * HOUR_H }}>
           <span
             className={cn(
-              "absolute -top-[7px] left-0 font-mono text-[10.5px] tabular-nums text-cool/80",
+              "absolute -top-[0.4375rem] left-0 font-mono text-[0.6563rem] tabular-nums text-cool/80 lg:text-[0.7813rem] xl:text-[0.8125rem]",
               nowMin !== null && Math.abs(nowMin - h * 60) < 16 && "invisible",
             )}
             style={{ width: "calc(var(--g) - 12px)" }}
@@ -135,11 +150,11 @@ export function DayTimeline({ tasks }: { tasks: Task[] }) {
       {/* sugestão ao passar o mouse num horário vazio */}
       {hover !== null && ghost === null && (
         <div className="pointer-events-none absolute inset-x-0 animate-fade" style={{ top: topOf(hover) }}>
-          <span className="absolute -top-[7px] left-0 font-mono text-[11px] tabular-nums text-foreground" style={{ width: "calc(var(--g) - 12px)" }}>
+          <span className="absolute -top-[0.4375rem] left-0 font-mono text-[0.6875rem] tabular-nums text-foreground" style={{ width: "calc(var(--g) - 12px)" }}>
             {fromMin(hover)}
           </span>
           <div className="absolute right-0 flex h-px items-center bg-foreground/30" style={{ left: "var(--g)" }}>
-            <span className="absolute left-2 -translate-y-1/2 rounded bg-background px-1.5 font-mono text-[10px] text-muted-foreground">+ adicionar</span>
+            <span className="absolute left-2 -translate-y-1/2 rounded bg-background px-1.5 font-mono text-[0.625rem] text-muted-foreground">+ adicionar</span>
           </div>
         </div>
       )}
@@ -147,7 +162,7 @@ export function DayTimeline({ tasks }: { tasks: Task[] }) {
       {/* alvo do drag */}
       {ghost !== null && (
         <div className="pointer-events-none absolute inset-x-0 z-20" style={{ top: topOf(ghost) }}>
-          <span className="absolute -top-[7px] left-0 rounded bg-foreground px-1 font-mono text-[11px] tabular-nums text-background" style={{ width: "calc(var(--g) - 12px)" }}>
+          <span className="absolute -top-[0.4375rem] left-0 rounded bg-foreground px-1 font-mono text-[0.6875rem] tabular-nums text-background" style={{ width: "calc(var(--g) - 12px)" }}>
             {fromMin(ghost)}
           </span>
           <div className="absolute right-0 h-0.5 rounded-full bg-foreground" style={{ left: "var(--g)" }} />
@@ -155,7 +170,7 @@ export function DayTimeline({ tasks }: { tasks: Task[] }) {
       )}
 
       {evs.map(({ t, s, e, col, cols }) => {
-        const h = Math.max(((e - s) / 60) * HOUR_H - 5, 32);
+        const h = Math.max(((e - s) / 60) * HOUR_H - 5, 36);
         const done = t.status === "concluido";
         const ctx = CTX[t.context];
         const checkable = t.kind === "tarefa" || t.kind === "lembrete";
@@ -165,7 +180,7 @@ export function DayTimeline({ tasks }: { tasks: Task[] }) {
             {...dragProps(t.id)}
             onClick={(ev) => { ev.stopPropagation(); openTask(t.id); }}
             className={cn(
-              "group absolute cursor-pointer overflow-hidden rounded-[10px] pl-4 pr-2.5 text-left transition-[background-color,opacity] duration-150",
+              "group absolute cursor-pointer overflow-hidden rounded-[0.625rem] pl-4 pr-2.5 lg:rounded-xl lg:pl-5 lg:pr-4 text-left transition-[background-color,opacity] duration-150",
               "active:cursor-grabbing",
               ctx.tint,
               ctx.edge,
@@ -179,17 +194,17 @@ export function DayTimeline({ tasks }: { tasks: Task[] }) {
             }}
           >
             <span className={cn("absolute inset-y-0 left-0 w-1", ctx.bar)} />
-            <div className="flex items-center gap-2 pt-[7px]">
+            <div className="flex items-center gap-2 pt-[0.4375rem] lg:gap-3 lg:pt-2">
               {checkable && (
                 <span onClick={(ev) => ev.stopPropagation()} className="-ml-0.5 shrink-0">
-                  <Checkbox checked={done} tone={t.context} onCheckedChange={() => toggle(t.id)} aria-label={`Concluir ${t.title}`} className="h-4 w-4" />
+                  <Checkbox checked={done} tone={t.context} onCheckedChange={() => toggle(t.id)} aria-label={`Concluir ${t.title}`} className="h-4 w-4 lg:h-[1.125rem] lg:w-[1.125rem]" />
                 </span>
               )}
-              <p className={cn("min-w-0 flex-1 truncate text-[14px] font-semibold leading-tight tracking-[-0.005em]", done && "line-through")}>{t.title}</p>
-              <span className="shrink-0 font-mono text-[10.5px] tabular-nums text-cool">{t.time}</span>
+              <p className={cn("min-w-0 flex-1 truncate text-[0.875rem] font-semibold leading-tight lg:text-[0.9688rem] xl:text-[1rem] tracking-[-0.005em]", done && "line-through")}>{t.title}</p>
+              <span className="shrink-0 font-mono text-[0.6563rem] tabular-nums text-cool lg:text-[0.7813rem] xl:text-[0.8125rem]">{t.time}</span>
             </div>
-            {h >= 44 && (
-              <p className="mt-0.5 truncate text-[12px] text-muted-foreground">
+            {h >= 48 && (
+              <p className="mt-0.5 truncate text-[0.75rem] text-muted-foreground lg:mt-1 lg:text-[0.8125rem]">
                 {[t.context === "trabalho" ? t.client : undefined, ctx.label].filter(Boolean).join(" · ")}
               </p>
             )}
@@ -199,11 +214,11 @@ export function DayTimeline({ tasks }: { tasks: Task[] }) {
 
       {showNow && (
         <div className="pointer-events-none absolute inset-x-0 z-10" style={{ top: topOf(nowMin!) }}>
-          <span className="absolute -top-[7px] left-0 text-right font-mono text-[11px] font-medium tabular-nums text-urgent" style={{ width: "calc(var(--g) - 12px)" }}>
+          <span className="absolute -top-[0.4375rem] left-0 text-right font-mono text-[0.6875rem] font-medium tabular-nums text-urgent lg:text-[0.7813rem] xl:text-[0.8125rem]" style={{ width: "calc(var(--g) - 12px)" }}>
             {fromMin(nowMin!)}
           </span>
           <div className="absolute right-0 h-px bg-urgent" style={{ left: "var(--g)" }}>
-            <span className="absolute -left-[3px] -top-[2.5px] h-1.5 w-1.5 rounded-full bg-urgent" />
+            <span className="absolute -left-[0.1875rem] -top-[0.1563rem] h-1.5 w-1.5 rounded-full bg-urgent" />
           </div>
         </div>
       )}

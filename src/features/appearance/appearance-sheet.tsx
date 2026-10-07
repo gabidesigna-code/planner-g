@@ -24,22 +24,22 @@ function SheetBody({ onClose }: { onClose: () => void }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center sm:p-4">
-      <div className="animate-fade absolute inset-0 bg-foreground/25 backdrop-blur-[2px]" onClick={onClose} />
+      <div className="animate-fade absolute inset-0 bg-foreground/25 backdrop-blur-[0.125rem]" onClick={onClose} />
       <div
         role="dialog"
         aria-label="Aparência"
         onKeyDown={(e) => { if (e.key === "Escape") { e.stopPropagation(); onClose(); } }}
-        className="animate-sheetUp sm:animate-menuIn relative flex max-h-[92dvh] w-full flex-col overflow-hidden rounded-t-2xl bg-surface shadow-pop sm:max-w-[560px] sm:rounded-xl"
+        className="animate-sheetUp sm:animate-menuIn relative flex max-h-[92dvh] w-full flex-col overflow-hidden rounded-t-2xl bg-surface shadow-pop sm:max-w-[35rem] sm:rounded-xl"
       >
         <div className="flex items-center justify-between px-5 pb-1 pt-4">
-          <h2 className="text-[17px] font-semibold tracking-[-0.02em]">Aparência</h2>
+          <h2 className="text-[1.0625rem] font-semibold tracking-[-0.02em]">Aparência</h2>
           <button onClick={onClose} aria-label="Fechar" className="-mr-2 grid h-10 w-10 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-hover hover:text-foreground sm:h-8 sm:w-8">
             <X className="h-4 w-4" strokeWidth={1.6} />
           </button>
         </div>
 
         <div className="scroll-thin flex-1 overflow-y-auto overscroll-contain px-5 pb-5 pt-3">
-          <p className="label-mono mb-2 text-[10px] tracking-[0.14em]">Modo</p>
+          <p className="label-mono mb-2 text-[0.625rem] tracking-[0.14em]">Modo</p>
           <div role="radiogroup" aria-label="Modo" className="grid grid-cols-3 gap-1 rounded-lg bg-hover p-1">
             {MODES.map(({ id, label, icon: Icon }) => (
               <button
@@ -48,7 +48,7 @@ function SheetBody({ onClose }: { onClose: () => void }) {
                 aria-checked={mode === id}
                 onClick={() => setMode(id)}
                 className={cn(
-                  "flex h-11 items-center justify-center gap-2 rounded-md text-[13.5px] transition-colors sm:h-9",
+                  "flex h-11 items-center justify-center gap-2 rounded-md text-[0.8438rem] transition-colors sm:h-9",
                   mode === id ? "bg-surface font-medium shadow-soft" : "text-muted-foreground hover:text-foreground",
                 )}
               >
@@ -57,7 +57,7 @@ function SheetBody({ onClose }: { onClose: () => void }) {
             ))}
           </div>
 
-          <p className="label-mono mb-2 mt-6 text-[10px] tracking-[0.14em]">Paleta</p>
+          <p className="label-mono mb-2 mt-6 text-[0.625rem] tracking-[0.14em]">Paleta</p>
           <div role="radiogroup" aria-label="Paleta" className="grid gap-2 sm:grid-cols-2">
             {PALETTES.map((p) => {
               const selected = p.id === paletteId;
@@ -69,13 +69,13 @@ function SheetBody({ onClose }: { onClose: () => void }) {
                   aria-checked={selected}
                   onClick={() => setPalette(p.id)}
                   className={cn(
-                    "flex min-h-[60px] items-center gap-3 rounded-xl p-3 text-left ring-1 transition-[box-shadow,background-color] duration-150",
+                    "flex min-h-[3.75rem] items-center gap-3 rounded-xl p-3 text-left ring-1 transition-[box-shadow,background-color] duration-150",
                     selected ? "bg-hover ring-2 ring-foreground" : "ring-border hover:bg-hover",
                   )}
                 >
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate text-[14px] font-medium">{p.name}</span>
-                    <span className="mt-0.5 block text-[12px] leading-snug text-muted-foreground">{p.mood}</span>
+                    <span className="block truncate text-[0.875rem] font-medium">{p.name}</span>
+                    <span className="mt-0.5 block text-[0.75rem] leading-snug text-muted-foreground">{p.mood}</span>
                     <Dots colors={previewColors(tokens)} className="mt-2 hidden sm:flex" />
                   </span>
                   <Dots colors={previewColors(tokens)} className="sm:hidden" small />

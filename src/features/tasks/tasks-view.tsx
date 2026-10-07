@@ -25,7 +25,7 @@ function Group({ label, tasks }: { label: string; tasks: Task[] }) {
     <section className="mb-10">
       <div className="mb-2 flex items-center gap-3">
         <span className="label-mono">{label}</span>
-        <span className="font-mono text-[11px] text-muted-foreground/60">{tasks.length}</span>
+        <span className="font-mono text-[0.6875rem] text-muted-foreground/60">{tasks.length}</span>
         <span className="h-px flex-1 bg-border" />
       </div>
       {tasks.map((t) => <TaskItem key={t.id} task={t} showDay showTime />)}
@@ -86,7 +86,7 @@ export function TasksView({ mode }: { mode: TasksMode }) {
   }
 
   return (
-    <div className="mx-auto w-full max-w-[720px] px-4 pb-36 pt-6 sm:px-8 sm:pt-16">
+    <div className="mx-auto w-full max-w-[45rem] px-4 pb-36 pt-6 sm:px-8 lg:max-w-[65rem] lg:px-8 lg:pt-8 xl:max-w-[73.75rem] 2xl:max-w-[87.5rem] sm:pt-16">
       <ViewHeader eyebrow={mode === "trabalho" || mode === "pessoal" ? "Contexto" : "Tudo em aberto"} title={TITLE[mode]}>
         {(mode === "tarefas" || mode === "concluidos") && <ContextSwitch />}
       </ViewHeader>

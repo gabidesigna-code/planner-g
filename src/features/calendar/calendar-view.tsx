@@ -36,7 +36,7 @@ export function CalendarView() {
   };
 
   return (
-    <div className="mx-auto w-full max-w-4xl px-4 pb-36 pt-6 sm:px-8 sm:pt-16">
+    <div className="mx-auto w-full max-w-4xl px-4 pb-36 pt-6 sm:px-8 lg:px-10 xl:max-w-5xl xl:px-12 2xl:max-w-6xl sm:pt-16">
       <ViewHeader eyebrow={String(cursor.y)} title={monthName(cursor.m)}>
         <ContextSwitch />
         <div className="flex items-center">
@@ -48,7 +48,7 @@ export function CalendarView() {
 
       <div className="animate-rise">
         <div className="mb-1 grid grid-cols-7">
-          {HEAD.map((h) => <div key={h} className="label-mono py-2 pl-2 text-[10px]">{h}</div>)}
+          {HEAD.map((h) => <div key={h} className="label-mono py-2 pl-2 text-[0.625rem]">{h}</div>)}
         </div>
         <div className="grid grid-cols-7 border-l border-t border-border">
           {cells.map((day) => {
@@ -67,13 +67,13 @@ export function CalendarView() {
                 onDrop={(e) => drop(e, day)}
                 aria-label={longDay(day)}
                 className={cn(
-                  "flex min-h-[72px] flex-col items-start gap-2 border-b border-r border-border p-2 text-left transition-colors duration-100 hover:bg-hover sm:min-h-[96px]",
+                  "flex min-h-[4.5rem] flex-col items-start gap-2 border-b border-r border-border p-2 text-left transition-colors duration-100 hover:bg-hover sm:min-h-[6rem]",
                   !inMonth && "text-muted-foreground/40",
                   isSel && "bg-muted",
                   over === key && "bg-muted ring-1 ring-inset ring-foreground/25",
                 )}
               >
-                <span className={cn("grid h-6 min-w-6 place-items-center rounded-full px-1 text-[13px] tabular-nums", isToday && "bg-foreground font-semibold text-background")}>
+                <span className={cn("grid h-6 min-w-6 place-items-center rounded-full px-1 text-[0.8125rem] tabular-nums", isToday && "bg-foreground font-semibold text-background")}>
                   {day.getDate()}
                 </span>
                 <span className="flex flex-wrap gap-1">
@@ -91,7 +91,7 @@ export function CalendarView() {
         <div className="mb-2 flex items-center gap-3">
           <span className="label-mono">{longDay(selected)}</span>
           <span className="h-px flex-1 bg-border" />
-          <button onClick={() => openAdd({ due: selected })} className="flex h-9 items-center gap-1.5 rounded-md px-2.5 text-[13px] text-muted-foreground transition-colors hover:bg-hover hover:text-foreground" aria-label="Adicionar neste dia">
+          <button onClick={() => openAdd({ due: selected })} className="flex h-9 items-center gap-1.5 rounded-md px-2.5 text-[0.8125rem] text-muted-foreground transition-colors hover:bg-hover hover:text-foreground" aria-label="Adicionar neste dia">
             <Plus className="h-4 w-4" /> Adicionar
           </button>
         </div>

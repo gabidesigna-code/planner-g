@@ -29,7 +29,7 @@ export function ContextSwitch() {
             aria-selected={active}
             onClick={() => setFilter(o.id)}
             className={cn(
-              "flex h-9 shrink-0 items-center gap-1.5 rounded-full px-4 text-[13.5px] transition-[background-color,color,box-shadow] duration-150 sm:h-7 sm:px-3 sm:text-[12.5px]",
+              "flex h-9 shrink-0 items-center gap-1.5 rounded-full px-4 text-[0.8438rem] transition-[background-color,color,box-shadow] duration-150 sm:h-8 sm:px-3.5 sm:text-[0.8125rem] lg:h-9 lg:px-4 lg:text-[0.875rem]",
               active
                 ? cn(o.on, "font-medium")
                 : "bg-surface/70 text-foreground/70 ring-1 ring-border/70 hover:bg-hover hover:text-foreground sm:bg-transparent sm:ring-0",

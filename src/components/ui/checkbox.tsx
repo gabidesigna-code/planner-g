@@ -16,7 +16,7 @@ const Checkbox = React.forwardRef<React.ElementRef<typeof CheckboxPrimitive.Root
     <CheckboxPrimitive.Root
       ref={ref}
       className={cn(
-        "peer relative grid h-[18px] w-[18px] shrink-0 after:absolute after:-inset-1.5 after:content-[''] max-sm:after:-inset-2.5 place-items-center rounded-full border-[1.5px] border-muted-foreground/50 bg-transparent",
+        "peer relative grid h-[1.125rem] w-[1.125rem] shrink-0 after:absolute after:-inset-1.5 after:content-[''] max-sm:after:-inset-2.5 place-items-center rounded-full border-[0.0938rem] border-muted-foreground/50 bg-transparent",
         "transition-[background-color,border-color,box-shadow] duration-150 hover:border-foreground hover:shadow-[0_0_0_4px_hsl(var(--foreground)/0.06)]",
         "data-[state=checked]:animate-pop data-[state=checked]:text-background",
         tone ? CTX[tone].check : "data-[state=checked]:border-foreground data-[state=checked]:bg-foreground",

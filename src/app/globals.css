@@ -5,7 +5,7 @@
 /* As cores (tokens) vêm de src/theme/palettes.ts, geradas como variáveis CSS pelo layout. */
 @layer base {
   * { @apply border-border; }
-  html { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; -webkit-text-size-adjust: 100%; }
+  html { font-size: 16px; -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; -webkit-text-size-adjust: 100%; }
   body { @apply bg-background font-sans text-foreground; overflow-x: clip; -webkit-tap-highlight-color: transparent; }
   ::selection { background: hsl(var(--work) / .25); }
   button, [role="button"], [role="tab"], select, summary { cursor: pointer; }
@@ -18,10 +18,10 @@
 
 @layer components {
   .kbd {
-    @apply inline-grid h-[18px] min-w-[18px] place-items-center rounded-[5px] border border-border bg-surface px-1 font-mono text-[10px] font-medium leading-none text-muted-foreground;
+    @apply inline-grid h-[1.125rem] min-w-[1.125rem] place-items-center rounded-[0.3125rem] border border-border bg-surface px-1 font-mono text-[0.625rem] font-medium leading-none text-muted-foreground;
   }
   .label-mono {
-    @apply font-mono text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground;
+    @apply font-mono text-[0.6875rem] font-medium uppercase tracking-[0.18em] text-muted-foreground;
   }
 }
 
@@ -29,6 +29,19 @@
   .scroll-thin::-webkit-scrollbar { width: 8px; }
   .scroll-thin::-webkit-scrollbar-thumb { background: hsl(var(--border)); border-radius: 8px; }
   .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
+}
+
+/* ESCALA BASE DO DESKTOP: quase todo tamanho do app está em rem, então crescer a fonte raiz
+   cresce textos, ícones, espaçamentos, sidebar e container juntos. Celular e tablet ficam em 16px. */
+@media (min-width: 1280px) { html { font-size: 17px; } }
+@media (min-width: 1536px) { html { font-size: 18px; } }
+@media (min-width: 1920px) { html { font-size: 19.5px; } }
+@media (min-width: 2400px) { html { font-size: 22px; } }
+
+/* No desktop, rótulos e atalhos não ficam abaixo de 12px/11px */
+@media (min-width: 1024px) {
+  .label-mono { font-size: 0.75rem; }
+  .kbd { font-size: 0.6875rem; }
 }
 
 /* Mobile: campos com 16px evitam o zoom automático do iOS ao focar */

@@ -23,15 +23,15 @@ const KINDS: { kind: Kind; icon: LucideIcon }[] = [
 const FORM_STATUSES: Status[] = ["a-fazer", "em-andamento", "aguardando", "concluido"];
 
 const input =
-  "h-11 w-full min-w-0 rounded-lg border border-border bg-background px-3 text-[14px] transition-colors placeholder:text-muted-foreground/50 hover:border-foreground/25 focus:border-foreground/40 focus:outline-none sm:h-9";
+  "h-11 w-full min-w-0 rounded-lg border border-border bg-background px-3 text-[0.875rem] transition-colors placeholder:text-muted-foreground/50 hover:border-foreground/25 focus:border-foreground/40 focus:outline-none sm:h-9";
 
 function Field({ label, error, group, className, children }: { label: string; error?: string; group?: boolean; className?: string; children: ReactNode }) {
   const Tag = group ? "div" : "label";
   return (
     <Tag className={cn("flex min-w-0 flex-col gap-1.5", className)} {...(group ? { role: "group", "aria-label": label } : {})}>
-      <span className="label-mono text-[10px] tracking-[0.14em]">{label}</span>
+      <span className="label-mono text-[0.625rem] tracking-[0.14em]">{label}</span>
       {children}
-      {error && <span className="text-[12px] text-urgent">{error}</span>}
+      {error && <span className="text-[0.75rem] text-urgent">{error}</span>}
     </Tag>
   );
 }
@@ -43,7 +43,7 @@ function Chip({ active, onClick, children, tone }: { active: boolean; onClick: (
       onClick={onClick}
       aria-pressed={active}
       className={cn(
-        "flex h-10 items-center gap-2 rounded-lg px-3 text-[13.5px] transition-colors sm:h-8 sm:text-[13px]",
+        "flex h-10 items-center gap-2 rounded-lg px-3 text-[0.8438rem] transition-colors sm:h-8 sm:text-[0.8125rem]",
         active ? cn("bg-muted font-medium", tone) : "text-muted-foreground ring-1 ring-border hover:bg-hover hover:text-foreground",
       )}
     >
@@ -170,7 +170,7 @@ function FormBody({ kind: initialKind, preset, today, now, onClose, onSubmit }: 
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center sm:p-4">
-      <div className="animate-fade absolute inset-0 bg-foreground/25 backdrop-blur-[2px]" onClick={onClose} />
+      <div className="animate-fade absolute inset-0 bg-foreground/25 backdrop-blur-[0.125rem]" onClick={onClose} />
       <form
         role="dialog"
         aria-label={`Nova ${KIND_LABEL[kind].toLowerCase()}`}
@@ -180,7 +180,7 @@ function FormBody({ kind: initialKind, preset, today, now, onClose, onSubmit }: 
           if (e.key === "Escape") { e.stopPropagation(); onClose(); }
           else if ((e.metaKey || e.ctrlKey) && e.key === "Enter") { e.preventDefault(); submit(); }
         }}
-        className="animate-sheetUp sm:animate-menuIn relative flex max-h-[94dvh] w-full flex-col overflow-hidden rounded-t-2xl bg-surface shadow-pop sm:max-h-[90dvh] sm:max-w-[580px] sm:rounded-xl"
+        className="animate-sheetUp sm:animate-menuIn relative flex max-h-[94dvh] w-full flex-col overflow-hidden rounded-t-2xl bg-surface shadow-pop sm:max-h-[90dvh] sm:max-w-[36.25rem] sm:rounded-xl"
       >
         <div className="flex items-center gap-2 px-4 pt-3 sm:pt-4">
           <div role="tablist" aria-label="Tipo" className="grid flex-1 grid-cols-4 gap-1 rounded-lg bg-hover p-1">
@@ -192,7 +192,7 @@ function FormBody({ kind: initialKind, preset, today, now, onClose, onSubmit }: 
                 aria-selected={k === kind}
                 onClick={() => changeKind(k)}
                 className={cn(
-                  "flex h-9 items-center justify-center gap-1.5 rounded-md text-[12.5px] transition-colors sm:h-8",
+                  "flex h-9 items-center justify-center gap-1.5 rounded-md text-[0.7813rem] transition-colors sm:h-8",
                   k === kind ? "bg-surface font-medium shadow-soft" : "text-muted-foreground hover:text-foreground",
                 )}
               >
@@ -214,9 +214,9 @@ function FormBody({ kind: initialKind, preset, today, now, onClose, onSubmit }: 
             placeholder={kind === "tarefa" ? "O que precisa ser feito?" : kind === "lembrete" ? "Do que lembrar?" : "Título"}
             aria-label="Título"
             aria-invalid={!!errors.title}
-            className="keep-size w-full bg-transparent text-[22px] font-semibold tracking-[-0.025em] placeholder:text-muted-foreground/45 focus:outline-none"
+            className="keep-size w-full bg-transparent text-[1.375rem] font-semibold tracking-[-0.025em] placeholder:text-muted-foreground/45 focus:outline-none"
           />
-          {errors.title && <p className="mt-1 text-[12px] text-urgent">{errors.title}</p>}
+          {errors.title && <p className="mt-1 text-[0.75rem] text-urgent">{errors.title}</p>}
 
           <div className="mt-4 flex flex-wrap gap-1.5" role="group" aria-label="Contexto">
             {(["trabalho", "pessoal"] as Context[]).map((c) => (
@@ -300,15 +300,15 @@ function FormBody({ kind: initialKind, preset, today, now, onClose, onSubmit }: 
                 onChange={(e) => setNote(e.target.value)}
                 rows={3}
                 placeholder="Opcional"
-                className="scroll-thin w-full resize-none rounded-lg border border-border bg-background px-3 py-2 text-[14px] leading-relaxed transition-colors placeholder:text-muted-foreground/50 hover:border-foreground/25 focus:border-foreground/40 focus:outline-none"
+                className="scroll-thin w-full resize-none rounded-lg border border-border bg-background px-3 py-2 text-[0.875rem] leading-relaxed transition-colors placeholder:text-muted-foreground/50 hover:border-foreground/25 focus:border-foreground/40 focus:outline-none"
               />
             </Field>
 
             {kind === "tarefa" && (
               <div className="col-span-2 flex flex-col gap-1.5">
-                <span className="label-mono text-[10px] tracking-[0.14em]">Subtarefas</span>
+                <span className="label-mono text-[0.625rem] tracking-[0.14em]">Subtarefas</span>
                 {subs.map((s, i) => (
-                  <div key={`${s}-${i}`} className="flex items-center gap-2 rounded-lg bg-hover px-3 py-2 text-[14px]">
+                  <div key={`${s}-${i}`} className="flex items-center gap-2 rounded-lg bg-hover px-3 py-2 text-[0.875rem]">
                     <span className="min-w-0 flex-1 break-words">{s}</span>
                     <button type="button" onClick={() => setSubs((l) => l.filter((_, j) => j !== i))} aria-label="Remover subtarefa" className="grid h-6 w-6 shrink-0 place-items-center text-muted-foreground hover:text-urgent">
                       <X className="h-3.5 w-3.5" />

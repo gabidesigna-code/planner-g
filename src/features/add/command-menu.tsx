@@ -131,8 +131,8 @@ export function CommandMenu({ open, preset, defaultContext, onClose, onCreate, o
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center px-3 pt-[7vh] sm:px-4 sm:pt-[14vh]">
-      <div className="animate-fade absolute inset-0 bg-foreground/25 backdrop-blur-[2px]" onClick={onClose} />
-      <div role="dialog" aria-label="Adicionar" onKeyDown={onKeyDown} className="animate-menuIn relative w-full max-w-[580px] overflow-hidden rounded-xl bg-surface shadow-pop">
+      <div className="animate-fade absolute inset-0 bg-foreground/25 backdrop-blur-[0.125rem]" onClick={onClose} />
+      <div role="dialog" aria-label="Adicionar" onKeyDown={onKeyDown} className="animate-menuIn relative w-full max-w-[36.25rem] overflow-hidden rounded-xl bg-surface shadow-pop">
         <div className="flex items-center gap-3 px-4 pt-4">
           <span className="label-mono">O que você quer adicionar?</span>
           <button
@@ -149,15 +149,15 @@ export function CommandMenu({ open, preset, defaultContext, onClose, onCreate, o
           value={query}
           onChange={(e) => { setQuery(e.target.value); setIdx(0); }}
           placeholder="Ex.: Dentista amanhã 16h"
-          className="keep-size w-full bg-transparent px-4 pb-4 pt-3 text-[20px] font-medium tracking-[-0.02em] placeholder:text-muted-foreground/45 focus:outline-none"
+          className="keep-size w-full bg-transparent px-4 pb-4 pt-3 text-[1.25rem] font-medium tracking-[-0.02em] placeholder:text-muted-foreground/45 focus:outline-none"
         />
-        <ul className="scroll-thin max-h-[52vh] sm:max-h-[340px] overflow-y-auto border-t border-border p-1.5">
+        <ul className="scroll-thin max-h-[52vh] sm:max-h-[21.25rem] overflow-y-auto border-t border-border p-1.5">
           {entries.map((en, i) => {
             const Icon = en.icon;
             const isAdd = i < TYPES.length;
             return (
               <li key={en.id}>
-                {i === TYPES.length && <p className="label-mono px-3 pb-1 pt-3 text-[10px]">Navegar</p>}
+                {i === TYPES.length && <p className="label-mono px-3 pb-1 pt-3 text-[0.625rem]">Navegar</p>}
                 <div className={cn("flex items-center rounded-lg transition-colors duration-75", i === safeIdx && "bg-hover")}>
                 <button
                   onMouseEnter={() => setIdx(i)}
@@ -165,12 +165,12 @@ export function CommandMenu({ open, preset, defaultContext, onClose, onCreate, o
                   className="flex min-w-0 flex-1 items-center gap-3 rounded-lg px-3 py-3 text-left sm:py-2"
                 >
                   {en.dot ? (
-                    <span className="grid h-[18px] w-[18px] place-items-center"><span className={cn("h-2 w-2 rounded-full", en.dot)} /></span>
+                    <span className="grid h-[1.125rem] w-[1.125rem] place-items-center"><span className={cn("h-2 w-2 rounded-full", en.dot)} /></span>
                   ) : (
-                    <Icon className={cn("h-[18px] w-[18px]", isAdd ? CTX[ctx].text : "text-muted-foreground")} strokeWidth={1.7} />
+                    <Icon className={cn("h-[1.125rem] w-[1.125rem]", isAdd ? CTX[ctx].text : "text-muted-foreground")} strokeWidth={1.7} />
                   )}
-                  <span className="text-[14px] font-medium">{en.label}</span>
-                  {en.hint && <span className="min-w-0 flex-1 truncate text-[13px] text-muted-foreground">{en.hint}</span>}
+                  <span className="text-[0.875rem] font-medium">{en.label}</span>
+                  {en.hint && <span className="min-w-0 flex-1 truncate text-[0.8125rem] text-muted-foreground">{en.hint}</span>}
                   {!en.hint && <span className="flex-1" />}
                   {en.shortcut && <span className="kbd hidden shrink-0 sm:grid">{en.shortcut}</span>}
                 </button>
@@ -189,7 +189,7 @@ export function CommandMenu({ open, preset, defaultContext, onClose, onCreate, o
             );
           })}
         </ul>
-        <div className="hidden items-center gap-4 border-t border-border px-4 py-2.5 font-mono sm:flex text-[11px] text-muted-foreground">
+        <div className="hidden items-center gap-4 border-t border-border px-4 py-2.5 font-mono sm:flex text-[0.6875rem] text-muted-foreground">
           <span><span className="kbd">↑↓</span> navegar</span>
           <span><span className="kbd">⏎</span> criar</span>
           <span><span className="kbd">⇧⏎</span> detalhes</span>
