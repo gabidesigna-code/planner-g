@@ -8,7 +8,8 @@ import { ValidationError } from "@/lib/task-dto";
 export const dynamic = "force-dynamic";
 
 /**
- * Chat da ori. NÃO grava nada: devolve o texto da resposta e, se for o caso, itens PROPOSTOS.
+ * Chat da ori. NÃO grava nada: devolve o texto da resposta e, se for o caso, itens PROPOSTOS para criar,
+ * alterações PROPOSTAS em itens existentes (já validadas e com antes/depois) ou uma pergunta "qual deles?".
  * A gravação acontece no navegador, pelos serviços de sempre, depois da confirmação.
  */
 export const POST = route(async (request) => {

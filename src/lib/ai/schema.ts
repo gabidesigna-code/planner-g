@@ -8,7 +8,8 @@ import { z } from "zod";
 export const AI_ITEM_TYPES = ["task", "appointment", "reminder", "event"] as const;
 export type AiItemType = (typeof AI_ITEM_TYPES)[number];
 
-const day = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine((s) => !Number.isNaN(Date.parse(`${s}T00:00:00Z`)), "data inválida");
+/** AAAA-MM-DD de um dia que existe (2026-02-31 não passa: só o Date.parse aceitaria). */
+const day = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine((s) => { const d = new Date(`${s}T00:00:00Z`); return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === s; }, "data inválida");
 const hm = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/);
 
 /** Um item como o modelo devolve. */

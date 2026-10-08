@@ -6,20 +6,29 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { OriMonogram, OriWordmark } from "@/components/brand/logo";
 import { toTask } from "@/features/ai/ai-panel";
+import { ChangeCard, useWhen } from "./change-card";
 import { useScrollLock } from "@/hooks/use-scroll-lock";
 import { useOriChats, type Conversation, type OriMessage } from "@/hooks/use-ori-chats";
 import { useApp } from "@/lib/app-context";
 import { CTX } from "@/lib/context";
 import { diffDays, fromIso, longDay } from "@/lib/dates";
 import { cn } from "@/lib/utils";
-import { MAX_CHAT_TEXT } from "@/lib/ai/chat-schema";
+import { MAX_CHAT_TEXT, type ChangeEntry } from "@/lib/ai/chat-schema";
+import { oriActionSchema, sameGuarded } from "@/lib/ai/actions";
+import { fromDto, toDto } from "@/lib/task-dto";
 import type { ProposedItem } from "@/lib/ai/schema";
 import { KIND_LABEL, RECURRENCE_LABEL, type Task } from "@/types";
+
+/** Por quanto tempo o "Desfazer" do cartão fica disponível depois de excluir. */
+const UNDO_MS = 12_000;
+/** Campos que uma alteração pode mexer (nomes do TaskDto = nomes do Task). */
+const PATCH_KEYS = ["title", "due", "endDate", "time", "end", "priority", "context", "category", "client", "topic", "note"] as const;
 
 const SUGGESTIONS = [
   "O que ainda falta hoje?",
   "Resuma a minha semana",
   "O que está atrasado?",
+  "Passa tudo que está atrasado para amanhã",
   "Amanhã às 14h reunião da FCA e antes conciliar o extrato",
 ];
 
@@ -180,8 +189,12 @@ function HistorySheet({ open, onClose, conversations, currentId, onOpen, onDelet
 /* ------------------------------------------------------------------ tela */
 
 export function OriView({ onCreate }: { onCreate: (t: Task) => void }) {
-  const { ownerName, today } = useApp();
+  const { ownerName, today, tasks, toggle, update, remove } = useApp();
   const chats = useOriChats();
+  const when = useWhen();
+  const [undo, setUndo] = useState<{ msgId: string; run: () => void } | null>(null);
+  const undoTimer = useRef<number | undefined>(undefined);
+  useEffect(() => () => window.clearTimeout(undoTimer.current), []);
   const [draft, setDraft] = useState("");
   const [history, setHistory] = useState(false);
   const listRef = useRef<HTMLDivElement>(null);
@@ -204,10 +217,10 @@ export function OriView({ onCreate }: { onCreate: (t: Task) => void }) {
     ta.style.height = `${Math.min(ta.scrollHeight, 160)}px`;
   }, [draft]);
 
-  const submit = (text = draft) => {
+  const submit = (text = draft, pick?: string) => {
     const t = text.trim();
     if (!t || busy) return;
-    chats.send(t);
+    chats.send(t, pick);
     setDraft("");
   };
 
@@ -216,6 +229,45 @@ export function OriView({ onCreate }: { onCreate: (t: Task) => void }) {
     items.forEach((it) => onCreate(toTask(it)));
     chats.setProposal(chats.current.id, msg.id, "saved");
   }, [chats, onCreate]);
+
+  /**
+   * Executa o que a usuária confirmou. NADA aqui vem "cru" do modelo: cada ação é revalidada (Zod), o item precisa
+   * existir e estar como na prévia; só então passa pelos serviços de sempre (useTasks → /api/items → Supabase).
+   */
+  const applyChanges = (msg: OriMessage, entries: ChangeEntry[]) => {
+    const conv = chats.current;
+    if (!conv) return;
+    const done: ChangeEntry[] = [];
+    const left: string[] = (msg.changes?.entries ?? []).filter((e) => !entries.includes(e)).map((e) => e.action.entityId);
+
+    for (const e of entries) {
+      const cur = tasks.find((t) => t.id === e.action.entityId);
+      if (!oriActionSchema.safeParse(e.action).success || !cur || !sameGuarded(toDto(cur), e.before)) { left.push(e.action.entityId); continue; }
+      const a = e.action.action;
+      if (a === "delete") remove(cur.id);
+      else if (a === "complete") { if (cur.status !== "concluido") toggle(cur.id); }
+      else if (a === "reopen") { if (cur.status === "concluido") toggle(cur.id); }
+      else if (e.after) {
+        const next = fromDto(e.after);
+        const was = e.before as unknown as Record<string, unknown>;
+        const now = e.after as unknown as Record<string, unknown>;
+        const patch: Record<string, unknown> = {};
+        for (const k of PATCH_KEYS) if (now[k] !== was[k]) patch[k] = next[k];
+        update(cur.id, patch as Partial<Task>);
+      }
+      done.push(e);
+    }
+
+    if (!done.length) return chats.patchMessage(conv.id, msg.id, { changeStatus: "stale" });
+    chats.patchMessage(conv.id, msg.id, { changeStatus: "done", changeSkipped: left });
+
+    const deleted = done.filter((e) => e.action.action === "delete");
+    window.clearTimeout(undoTimer.current);
+    if (deleted.length) {
+      setUndo({ msgId: msg.id, run: () => { deleted.forEach((e) => onCreate(fromDto(e.before))); chats.patchMessage(conv.id, msg.id, { changeStatus: "undone" }); } });
+      undoTimer.current = window.setTimeout(() => setUndo(null), UNDO_MS);
+    } else setUndo(null);
+  };
 
   const empty = chats.ready && messages.length === 0;
 
@@ -239,7 +291,7 @@ export function OriView({ onCreate }: { onCreate: (t: Task) => void }) {
             <div className="animate-rise m-auto flex w-full max-w-[32rem] flex-col items-center py-8 text-center">
               <OriMonogram tile className="h-14 w-14" />
               <h1 className="mt-5 text-[1.6rem] font-semibold tracking-[-0.03em]">{firstName ? `Oi, ${firstName}.` : "Oi."}</h1>
-              <p className="mt-2 max-w-[24rem] text-[0.92rem] leading-relaxed text-muted-foreground">Posso resumir o seu dia, apontar o que está atrasado ou marcar coisas para você. Você confirma antes de eu adicionar qualquer item.</p>
+              <p className="mt-2 max-w-[24rem] text-[0.92rem] leading-relaxed text-muted-foreground">Posso resumir o seu dia, apontar o que está atrasado, marcar coisas para você e também mudar, reagendar, concluir ou apagar o que já está na agenda. Você sempre confirma antes.</p>
               <div className="mt-6 flex flex-wrap justify-center gap-2">
                 {SUGGESTIONS.map((s) => (
                   <button key={s} onClick={() => submit(s)} className="rounded-full bg-hover px-3.5 py-2 text-[0.82rem] text-foreground/80 transition-colors hover:bg-muted hover:text-foreground">{s}</button>
@@ -250,6 +302,32 @@ export function OriView({ onCreate }: { onCreate: (t: Task) => void }) {
             <>
               {messages.map((m) => (
                 <Bubble key={m.id} msg={m}>
+                  {m.role === "ori" && m.changes ? (
+                    <ChangeCard
+                      msg={m}
+                      onConfirm={(entries) => applyChanges(m, entries)}
+                      onCancel={() => chats.current && chats.patchMessage(chats.current.id, m.id, { changeStatus: "cancelled" })}
+                      canUndo={undo?.msgId === m.id}
+                      onUndo={() => { undo?.run(); window.clearTimeout(undoTimer.current); setUndo(null); }}
+                    />
+                  ) : null}
+                  {m.role === "ori" && m.choices?.length && m.id === messages[messages.length - 1]?.id && !busy ? (
+                    <div className="mt-2 flex w-full max-w-[28rem] flex-col gap-1.5">
+                      {m.choices.map((t) => (
+                        <button
+                          key={t.id}
+                          onClick={() => submit(`${t.title} — ${when(t)}`, t.id.slice(0, 8))}
+                          className="flex items-center gap-2.5 rounded-xl border border-border bg-surface px-3 py-2.5 text-left shadow-soft transition-colors hover:bg-hover"
+                        >
+                          <span className={cn("h-1.5 w-1.5 shrink-0 rounded-full", CTX[t.context].dot)} />
+                          <span className="min-w-0 flex-1">
+                            <span className="block truncate text-[0.88rem] font-medium">{t.title}</span>
+                            <span className="block text-[0.74rem] text-muted-foreground">{[when(t), t.client, t.category !== "Outros" ? t.category : null].filter(Boolean).join(" · ")}</span>
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  ) : null}
                   {m.role === "ori" && m.items?.length ? (
                     <Proposal
                       msg={m}
@@ -293,7 +371,7 @@ export function OriView({ onCreate }: { onCreate: (t: Task) => void }) {
             <ArrowUp className="h-[1.125rem] w-[1.125rem]" strokeWidth={2} />
           </button>
         </div>
-        <p className="mx-auto mt-1.5 hidden max-w-[44rem] px-2 text-[0.68rem] text-muted-foreground/70 sm:block">A ori só adiciona itens depois da sua confirmação · Enter envia · Shift+Enter quebra a linha</p>
+        <p className="mx-auto mt-1.5 hidden max-w-[44rem] px-2 text-[0.68rem] text-muted-foreground/70 sm:block">A ori só adiciona, altera ou apaga itens depois da sua confirmação · Enter envia · Shift+Enter quebra a linha</p>
       </div>
 
       <HistorySheet

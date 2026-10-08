@@ -2,25 +2,16 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { api } from "@/services/api-client";
-import { MAX_CHAT_TEXT, MAX_CHAT_TURNS, type OriChatTurn } from "@/lib/ai/chat-schema";
-import type { ProposedItem } from "@/lib/ai/schema";
+import { MAX_CHAT_TEXT } from "@/lib/ai/chat-schema";
+import { toTurns, type OriMessage } from "@/lib/ai/chat-turns";
 
 /**
  * Conversas com a ori. O histórico fica NESTE aparelho (localStorage): o banco do app não tem tabela de
  * conversas e não foi alterado. As respostas vêm do mesmo Gemini do "Organizar com ori" (api.oriChat).
  */
 
-export type ProposalStatus = "pending" | "saved" | "dismissed";
-
-export interface OriMessage {
-  id: string;
-  role: "user" | "ori";
-  text: string;
-  at: number;
-  /** itens que a ori PROPÔS criar (só a ori) */
-  items?: ProposedItem[];
-  proposal?: ProposalStatus;
-}
+export type { OriMessage, ProposalStatus, ChangeStatus } from "@/lib/ai/chat-turns";
+import type { ProposalStatus } from "@/lib/ai/chat-turns";
 
 export interface Conversation {
   id: string;
@@ -66,20 +57,6 @@ function write(s: Stored) {
   }
 }
 
-const itemSummary = (it: ProposedItem) => `${it.title} (${it.date}${it.time ? ` ${it.time}` : ""})`;
-
-/** O que a ori "lembra": as últimas mensagens, com as propostas resumidas e o que aconteceu com elas. */
-function toTurns(messages: OriMessage[]): OriChatTurn[] {
-  return messages.slice(-MAX_CHAT_TURNS).map((m) => {
-    let text = m.text;
-    if (m.role === "ori" && m.items?.length) {
-      const estado = m.proposal === "saved" ? "ADICIONADOS pela usuária" : m.proposal === "dismissed" ? "NÃO adicionados (a usuária recusou)" : "ainda sem resposta";
-      text += `\n[Você propôs criar: ${m.items.map(itemSummary).join("; ")}. Estado: ${estado}.]`;
-    }
-    return { role: m.role, text: text.slice(0, MAX_CHAT_TEXT) };
-  });
-}
-
 export function useOriChats() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [currentId, setCurrentId] = useState<string | null>(null);
@@ -117,7 +94,12 @@ export function useOriChats() {
     setPending((p) => new Set(p).add(id));
     try {
       const res = await api.oriChat(toTurns(messages));
-      append(id, { id: newId(), role: "ori", text: res.reply, at: Date.now(), ...(res.items.length ? { items: res.items, proposal: "pending" as const } : {}) });
+      append(id, {
+        id: newId(), role: "ori", text: res.reply, at: Date.now(),
+        ...(res.items.length ? { items: res.items, proposal: "pending" as const } : {}),
+        ...(res.changes ? { changes: res.changes, changeStatus: "pending" as const } : {}),
+        ...(res.choices?.length ? { choices: res.choices } : {}),
+      });
     } catch (e) {
       setErrors((er) => ({ ...er, [id]: e instanceof Error ? e.message : "Não consegui falar com a ori agora." }));
     } finally {
@@ -125,11 +107,11 @@ export function useOriChats() {
     }
   }, [append]);
 
-  const send = useCallback((text: string) => {
+  const send = useCallback((text: string, pick?: string) => {
     const t = text.trim().slice(0, MAX_CHAT_TEXT);
     if (!t) return;
     const at = Date.now();
-    const user: OriMessage = { id: newId(), role: "user", text: t, at };
+    const user: OriMessage = { id: newId(), role: "user", text: t, at, ...(pick ? { pick } : {}) };
     let id = currentId;
     let existing = id ? convRef.current.find((c) => c.id === id) : undefined;
     if (!existing) {
@@ -161,6 +143,10 @@ export function useOriChats() {
     patchConversation(convId, (c) => ({ ...c, messages: c.messages.map((m) => (m.id === msgId ? { ...m, proposal: status } : m)) }));
   }, [patchConversation]);
 
+  const patchMessage = useCallback((convId: string, msgId: string, patch: Partial<OriMessage>) => {
+    patchConversation(convId, (c) => ({ ...c, messages: c.messages.map((m) => (m.id === msgId ? { ...m, ...patch } : m)) }));
+  }, [patchConversation]);
+
   const current = useMemo(() => conversations.find((c) => c.id === currentId) ?? null, [conversations, currentId]);
   const sorted = useMemo(() => [...conversations].sort((a, b) => b.updatedAt - a.updatedAt), [conversations]);
 
@@ -170,6 +156,6 @@ export function useOriChats() {
     current,
     thinking: currentId ? pending.has(currentId) : false,
     error: currentId ? (errors[currentId] ?? null) : null,
-    send, retry, newChat, open, remove, setProposal,
+    send, retry, newChat, open, remove, setProposal, patchMessage,
   };
 }
