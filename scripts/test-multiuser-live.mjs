@@ -23,17 +23,20 @@ if (!URL_ || !ANON || !SERVICE) {
   process.exit(1);
 }
 
+/** Chaves novas (sb_publishable_ / sb_secret_) não são JWT e vão só em `apikey`; chaves antigas (JWT) também podem ir em Authorization. */
+const keyHeaders = (key, token) => ({ apikey: key, ...(token ? { authorization: `Bearer ${token}` } : key.startsWith("eyJ") ? { authorization: `Bearer ${key}` } : {}) });
+
 const call = async (method, p, { token, body, prefer } = {}) => {
   const res = await fetch(`${URL_}${p}`, {
     method,
-    headers: { apikey: ANON, authorization: `Bearer ${token ?? ANON}`, "content-type": "application/json", ...(prefer ? { prefer } : {}) },
+    headers: { ...keyHeaders(ANON, token), "content-type": "application/json", ...(prefer ? { prefer } : {}) },
     body: body === undefined ? undefined : JSON.stringify(body),
   });
   let json = null;
   try { json = await res.json(); } catch {}
   return { status: res.status, json };
 };
-const admin = (method, p, body) => fetch(`${URL_}/auth/v1/admin${p}`, { method, headers: { apikey: SERVICE, authorization: `Bearer ${SERVICE}`, "content-type": "application/json" }, body: body ? JSON.stringify(body) : undefined }).then(async (r) => ({ status: r.status, json: await r.json().catch(() => null) }));
+const admin = (method, p, body) => fetch(`${URL_}/auth/v1/admin${p}`, { method, headers: { ...keyHeaders(SERVICE), "content-type": "application/json" }, body: body ? JSON.stringify(body) : undefined }).then(async (r) => ({ status: r.status, json: await r.json().catch(() => null) }));
 const rest = (method, table, opts) => call(method, `/rest/v1/${table}`, opts);
 
 let pass = 0, fail = 0;
@@ -50,8 +53,8 @@ async function newUser(label) {
   const password = `Senha-${randomUUID()}`;
   const c = await admin("POST", "/users", { email, password, email_confirm: true });
   assert.equal(c.status, 200, `não consegui criar a conta de teste (${c.status}): confira a service_role`);
-  made.push(c.json.id);
-  const t = await fetch(`${URL_}/auth/v1/token?grant_type=password`, { method: "POST", headers: { apikey: ANON, "content-type": "application/json" }, body: JSON.stringify({ email, password }) }).then((r) => r.json());
+  made.push({ id: c.json.id, email });
+  const t = await fetch(`${URL_}/auth/v1/token?grant_type=password`, { method: "POST", headers: { ...keyHeaders(ANON), "content-type": "application/json" }, body: JSON.stringify({ email, password }) }).then((r) => r.json());
   assert.ok(t.access_token, "não consegui entrar com a conta de teste");
   return { id: c.json.id, token: t.access_token };
 }
@@ -109,8 +112,18 @@ try {
     assert.ok(denied(await rest("POST", "tasks", { body: { title: "x", context: "pessoal", date: "2026-10-10" } })));
   });
 } finally {
-  for (const id of made) await admin("DELETE", `/users/${id}`);
-  console.log(`\nContas de teste apagadas (${made.length}).`);
+  // confere cada exclusão (antes o resultado era ignorado) e tenta de novo uma vez
+  const left = [];
+  for (const u of made) {
+    let r = await admin("DELETE", `/users/${u.id}`);
+    if (r.status >= 300) {
+      await new Promise((ok) => setTimeout(ok, 1500));
+      r = await admin("DELETE", `/users/${u.id}`);
+    }
+    if (r.status >= 300) left.push(`${u.email} (status ${r.status}: ${JSON.stringify(r.json)})`);
+  }
+  if (left.length) console.log(`\nATENCAO: sobrou conta de teste (apague pelo painel: Authentication > Users):\n  ${left.join("\n  ")}`);
+  else console.log(`\nContas de teste apagadas (${made.length}).`);
 }
 console.log(`${pass} ok, ${fail} falharam`);
 process.exit(fail ? 1 : 0);

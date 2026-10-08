@@ -80,7 +80,8 @@ const byEmail = (email) => [...users.values()].find((u) => u.email === String(em
 
 async function handleAuth(req, res, url, body) {
   const route = url.pathname.replace("/auth/v1", "");
-  const bearer = (req.headers.authorization ?? "").replace(/^Bearer /, "");
+  // como no Supabase real: a chave secreta pode vir só em `apikey` (formato novo, sem JWT)
+  const bearer = (req.headers.authorization ?? "").replace(/^Bearer /, "") || String(req.headers.apikey ?? "");
 
   if (route === "/signup" && req.method === "POST") {
     const email = String(body.email ?? "").trim().toLowerCase();

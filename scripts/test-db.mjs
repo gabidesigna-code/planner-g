@@ -15,7 +15,11 @@ const root = path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "supa
 const MIGRATIONS = fs.readdirSync(path.join(root, "migrations")).filter((f) => f.endsWith(".sql")).sort();
 const BASE = MIGRATIONS.filter((f) => f < "20261009000100"); // até a fase 1
 const PHASE3 = MIGRATIONS.find((f) => f.includes("multiuser_constraints"));
-const sql = (f, dir = "migrations") => fs.readFileSync(path.join(root, dir, f), "utf8");
+const sql = (f, dir = "migrations") => {
+  const text = fs.readFileSync(path.join(root, dir, f), "utf8");
+  // a Fase 3 é colada no painel SEM comentários: o teste executa exatamente isso
+  return f.includes("multiuser_constraints") ? text.replace(/^--.*\n/gm, "") : text;
+};
 
 let failed = false;
 const step = async (label, fn) => {
@@ -235,6 +239,24 @@ console.log("A) Banco novo, multiusuário");
     });
   });
 
+  await step("apagar tarefa/conta NÃO depende de quem apaga ter acesso à tabela recurrences (bug do log: permission denied for table recurrences)", async () => {
+    await db.exec("revoke delete, select on public.recurrences from authenticated"); // simula um papel sem acesso (como o do Auth)
+    try {
+      await as(db, B, async () => {
+        const t = crypto.randomUUID();
+        await db.query("insert into public.tasks (id, title, context, date) values ($1, 'com repeticao', 'pessoal', '2026-10-20')", [t]);
+        await db.exec("reset role");
+        await db.query("insert into public.recurrences (entity_type, entity_id, frequency, user_id) values ('task', $1, 'weekly', $2)", [t, B]);
+        await db.exec("set role authenticated");
+        await db.query("delete from public.tasks where id = $1", [t]); // antes da correção: permission denied for table recurrences
+        await db.exec("reset role");
+        assert.equal(Number((await db.query("select count(*) n from public.recurrences where entity_id = $1", [t])).rows[0].n), 0, "a recorrência deveria sair junto");
+      });
+    } finally {
+      await db.exec("grant select, insert, update, delete on public.recurrences to authenticated");
+    }
+  });
+
   await step("restrições de dados continuam valendo (título vazio, data final, subtarefa órfã, role inválido)", async () => {
     await as(db, A, async () => {
       await rejects(db.query("insert into public.tasks (title, context, date) values ('   ', 'trabalho', '2026-01-10')"), /check constraint/, "título vazio");
@@ -343,13 +365,13 @@ console.log("\nB) Banco LEGADO (dados de antes do login) → fase 1 → conta �
   });
 
   await step("claim com e-mail inexistente falha e não altera nada", async () => {
-    await rejects(db.exec(claimBlock("ninguem@exemplo.com")), /Não existe conta/, "e-mail errado");
+    await rejects(db.exec(claimBlock("ninguem@exemplo.com")), /Conta nao encontrada/, "e-mail errado");
     assert.equal(Number((await db.query("select count(*) n from public.tasks where user_id is null")).rows[0].n), 3);
   });
 
   await step("claim recusa conta que já tem dados próprios (não mistura)", async () => {
     await as(db, friend, async () => { await db.query("insert into public.tasks (title, context, date) values ('da Duda', 'pessoal', '2026-10-10')"); });
-    await rejects(db.exec(claimBlock("duda@exemplo.com")), /já tem dados próprios/, "conta com dados");
+    await rejects(db.exec(claimBlock("duda@exemplo.com")), /ja tem dados proprios/, "conta com dados");
     assert.equal(Number((await db.query("select count(*) n from public.tasks where user_id is null")).rows[0].n), 3);
     await db.exec("delete from public.tasks where title = 'da Duda'");
   });
