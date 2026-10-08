@@ -8,6 +8,7 @@ import { CTX } from "@/lib/context";
 import { addDays, fromIso, isoDate, weekStart } from "@/lib/dates";
 import { useScrollLock } from "@/hooks/use-scroll-lock";
 import { useApp } from "@/lib/app-context";
+import { REMINDER_OPTIONS, reminderToValue, valueToReminder } from "@/lib/reminders";
 import {
   KIND_LABEL, PRIORITY_LABEL, RECURRENCE_LABEL, STATUS_LABEL,
   type Context, type Priority, type Recurrence, type Status, type Task,
@@ -38,7 +39,7 @@ export function SidePanel() {
 }
 
 function PanelBody({ task }: { task: Task }) {
-  const { update, remove, toggle, toggleSub, toggleImportant, openTask, today, categoryNames } = useApp();
+  const { update, remove, toggle, toggleSub, toggleImportant, openTask, today, categoryNames, push } = useApp();
   useScrollLock(true, "(max-width: 639px)");
   const [newSub, setNewSub] = useState("");
   const ctx = CTX[task.context];
@@ -141,11 +142,23 @@ function PanelBody({ task }: { task: Task }) {
         )}
         <Row label="Horário">
           <div className="flex items-center gap-1">
-            <input type="time" value={task.time ?? ""} onChange={(e) => set({ time: e.target.value || undefined, end: e.target.value ? task.end : undefined })} className={prop} aria-label="Início" />
+            <input type="time" value={task.time ?? ""} onChange={(e) => set({ time: e.target.value || undefined, end: e.target.value ? task.end : undefined, ...(e.target.value ? {} : { reminderMinutes: undefined }) })} className={prop} aria-label="Início" />
             <span className="text-muted-foreground/50">→</span>
             <input type="time" value={task.end ?? ""} disabled={!task.time} onChange={(e) => set({ end: e.target.value || undefined })} className={cn(prop, "disabled:opacity-40")} aria-label="Fim" />
           </div>
         </Row>
+        {task.time && (
+          <Row label="Lembrar">
+            <select
+              value={reminderToValue(task.reminderMinutes)}
+              onChange={(e) => { set({ reminderMinutes: valueToReminder(e.target.value) }); if (e.target.value !== "") push.ask(); }}
+              className={prop}
+              aria-label="Lembrar"
+            >
+              {REMINDER_OPTIONS.map((o) => <option key={o.label} value={reminderToValue(o.minutes)}>{o.label}</option>)}
+            </select>
+          </Row>
+        )}
         {(task.kind === "compromisso" || task.kind === "evento") && (
           <Row label="Local">
             <input value={task.location ?? ""} onChange={(e) => set({ location: e.target.value || undefined })} placeholder="Onde?" className={prop} />

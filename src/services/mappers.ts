@@ -32,6 +32,7 @@ export interface TaskRow {
   waiting_on: string | null;
   priority: Priority;
   important?: boolean;
+  reminder_minutes?: number | null;
   date: string;
   time: string | null;
   notes: string | null;
@@ -52,6 +53,7 @@ export interface EventRow {
   waiting_on: string | null;
   priority: Priority;
   important?: boolean;
+  reminder_minutes?: number | null;
   start_date: string;
   end_date: string | null;
   start_time: string | null;
@@ -127,6 +129,7 @@ export function taskFromRow(r: TaskRow, cats: CategoryIndex, recurrence?: Recurr
     client: r.client_project ?? undefined,
     priority: r.priority,
     important: r.important || undefined,
+    reminderMinutes: r.reminder_minutes ?? undefined,
     status: r.status,
     note: r.notes ?? undefined,
     waitingOn: r.waiting_on ?? undefined,
@@ -153,6 +156,7 @@ export function eventFromRow(r: EventRow, cats: CategoryIndex, recurrence?: Recu
     client: r.client_project ?? undefined,
     priority: r.priority,
     important: r.important || undefined,
+    reminderMinutes: r.reminder_minutes ?? undefined,
     status: r.status,
     note: r.notes ?? undefined,
     waitingOn: r.waiting_on ?? undefined,
@@ -176,6 +180,7 @@ export function taskColumns(t: Task, cats: CategoryIndex) {
     waiting_on: t.waitingOn ?? null,
     priority: t.priority,
     important: !!t.important,
+    reminder_minutes: t.time ? (t.reminderMinutes ?? null) : null,
     date: isoDate(t.due),
     time: t.time ?? null,
     notes: t.note ?? null,
@@ -197,6 +202,7 @@ export function eventColumns(t: Task, cats: CategoryIndex) {
     waiting_on: t.waitingOn ?? null,
     priority: t.priority,
     important: !!t.important,
+    reminder_minutes: t.time ? (t.reminderMinutes ?? null) : null,
     start_date: isoDate(t.due),
     // o banco exige fim >= início; um fim anterior vira "sem data final"
     end_date: t.endDate && t.endDate.getTime() >= t.due.getTime() ? isoDate(t.endDate) : null,

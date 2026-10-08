@@ -24,7 +24,11 @@ const sql = (f, dir = "migrations") => {
 let failed = false;
 const step = async (label, fn) => {
   try { await fn(); console.log(`✓ ${label}`); }
-  catch (e) { failed = true; console.log(`✗ ${label}: ${String(e.message).split("\n")[0]}`); }
+  catch (e) {
+    failed = true;
+    console.log(`✗ ${label}: ${String(e.message).split("\n")[0]}`);
+    if (process.env.DEBUG_TESTS) console.log(String(e.message).split("\n").slice(1, 12).join("\n"));
+  }
 };
 const rejects = async (p, re, what) => {
   try { await p; } catch (e) { assert.match(String(e.message), re, `${what}: erro inesperado (${e.message})`); return; }
@@ -413,6 +417,244 @@ console.log("\nB) Banco LEGADO (dados de antes do login) → fase 1 → conta �
     assert.equal(nullable, "NO");
     assert.equal(await count(db, "preferences"), 2);
     await as(db, owner, async () => { assert.equal((await db.query("select palette from public.preferences")).rows[0].palette, "monochrome"); });
+  });
+  await db.close();
+}
+
+
+// ======================================================================== C) lembretes
+console.log("\nC) Lembretes e notificações (disparo agendado, sem duplicidade, por conta)");
+{
+  const db = await makeDb();
+  await db.exec(`
+    create schema net;
+    create table net.calls (id bigserial primary key, url text, body jsonb, headers jsonb);
+    create function net.http_post(url text, body jsonb default '{}', params jsonb default '{}',
+                                  headers jsonb default '{}', timeout_milliseconds int default 5000)
+      returns bigint language plpgsql as $$
+      declare i bigint; begin
+        insert into net.calls (url, body, headers) values (url, body, headers) returning id into i; return i;
+      end $$;
+    create table net._http_response (id bigint primary key, status_code int, content text, timed_out boolean, error_msg text);
+  `);
+  await apply(db, MIGRATIONS);
+  await db.exec("insert into private.app_config values ('push_url', 'https://app.test/api/push/send'), ('push_secret', 's3cret')");
+
+  const A = await signup(db, "gabi@exemplo.com");
+  const B = await signup(db, "duda@exemplo.com");
+  await db.query("update public.profiles set display_name = 'Gabi' where id = $1", [A]);
+  await db.query("update public.profiles set display_name = 'Duda' where id = $1", [B]);
+  // instantes em UTC; a conta A usa America/Sao_Paulo (UTC-3)
+  const sub = (uid, ep) => db.query("insert into public.push_subscriptions (user_id, endpoint, p256dh, auth) values ($1, $2, 'p', 'a')", [uid, ep]);
+  const disp = async (now) => Number((await db.query("select private.dispatch_reminders($1::timestamptz) n", [now])).rows[0].n);
+  const calls = async () => (await db.query("select body from net.calls order by id")).rows.flatMap((r) => r.body.notifications);
+  const task = async (o) => {
+    const id = crypto.randomUUID();
+    await db.query("insert into public.tasks (id, user_id, title, context, date, time, reminder_minutes, status) values ($1, $2, $3, 'pessoal', $4, $5, $6, $7)", [id, o.user ?? A, o.title ?? "Tarefa", o.date ?? "2026-10-20", o.time === undefined ? "14:00" : o.time, o.mins === undefined ? 10 : o.mins, o.status ?? "a-fazer"]);
+    return id;
+  };
+
+  await sub(A, "https://push.test/phone-A");
+  await sub(A, "https://push.test/desktop-A");
+  await sub(B, "https://push.test/phone-B");
+
+  await step("avisa no instante certo no fuso da conta (14:00 em São Paulo, 10 min antes = 16:50 UTC), nem antes", async () => {
+    const id = await task({ title: "Reunião FCA", mins: 10 });
+    assert.equal(await disp("2026-10-20T16:49:59Z"), 0, "antes da hora");
+    assert.equal(await disp("2026-10-20T14:50:00Z"), 0, "14:50 UTC seria o horário se o fuso fosse ignorado");
+    assert.equal(await disp("2026-10-20T16:50:00Z"), 1, "na hora");
+    const [n] = await calls();
+    assert.equal(n.tag, id);
+    assert.equal(n.name, "Gabi");
+    assert.equal(n.title, "Reunião FCA");
+    assert.equal(n.minutes_before, 10);
+    assert.equal(n.time, "14:00");
+  });
+
+  await step("cada conta recebe só os avisos dos próprios itens, e só nos próprios aparelhos", async () => {
+    const [n] = await calls();
+    const eps = n.subscriptions.map((s) => s.endpoint).sort();
+    assert.deepEqual(eps, ["https://push.test/desktop-A", "https://push.test/phone-A"], "os dois aparelhos da Gabi, nenhum da Duda");
+    const tb = await task({ user: B, title: "Da Duda", mins: 0, time: "09:00", date: "2026-10-21" });
+    assert.equal(await disp("2026-10-21T12:00:00Z"), 1);
+    const last = (await calls()).at(-1);
+    assert.equal(last.tag, tb);
+    assert.equal(last.name, "Duda");
+    assert.deepEqual(last.subscriptions.map((s) => s.endpoint), ["https://push.test/phone-B"]);
+  });
+
+  await step("NUNCA envia duas vezes (rodar de novo, ou várias vezes seguidas, não repete)", async () => {
+    const before = (await calls()).length;
+    for (const now of ["2026-10-20T16:50:00Z", "2026-10-20T16:50:30Z", "2026-10-20T16:55:00Z", "2026-10-20T17:05:00Z"]) assert.equal(await disp(now), 0);
+    assert.equal((await calls()).length, before);
+    assert.equal(Number((await db.query("select count(*) n from private.reminder_deliveries where entity_id = (select id from public.tasks where title = 'Reunião FCA')")).rows[0].n), 1);
+  });
+
+  await step("na hora (0) avisa no horário do item; 1 dia antes (1440) avisa na véspera", async () => {
+    const id0 = await task({ title: "Pagar cartão", mins: 0, time: "10:00", date: "2026-10-22" });
+    assert.equal(await disp("2026-10-22T12:59:59Z"), 0);
+    assert.equal(await disp("2026-10-22T13:00:00Z"), 1);
+    assert.equal((await calls()).at(-1).tag, id0);
+    const id1 = await task({ title: "Consulta", mins: 1440, time: "08:30", date: "2026-10-24" });
+    assert.equal(await disp("2026-10-23T11:29:59Z"), 0);
+    assert.equal(await disp("2026-10-23T11:30:00Z"), 1);
+    const last = (await calls()).at(-1);
+    assert.equal(last.tag, id1);
+    assert.equal(last.minutes_before, 1440);
+  });
+
+  await step("o fuso é o da conta: conta em UTC avisa às 14:00 UTC, a de São Paulo só às 17:00 UTC", async () => {
+    const C = await signup(db, "ana@exemplo.com");
+    await db.query("update public.preferences set timezone = 'UTC' where user_id = $1", [C]);
+    await sub(C, "https://push.test/phone-C");
+    const idC = await task({ user: C, title: "Em UTC", mins: 0, time: "14:00", date: "2026-10-25" });
+    const idA = await task({ user: A, title: "Em SP", mins: 0, time: "14:00", date: "2026-10-25" });
+    assert.equal(await disp("2026-10-25T14:00:00Z"), 1, "só a conta UTC");
+    assert.equal((await calls()).at(-1).tag, idC);
+    assert.equal(await disp("2026-10-25T17:00:00Z"), 1, "só a conta de São Paulo");
+    assert.equal((await calls()).at(-1).tag, idA);
+  });
+
+  await step("tarefa concluída antes do horário não avisa; se for reaberta a tempo, avisa", async () => {
+    const id = await task({ title: "Vai concluir", mins: 0, time: "11:00", date: "2026-10-26" });
+    await db.query("update public.tasks set status = 'concluido' where id = $1", [id]);
+    assert.equal(await disp("2026-10-26T14:00:00Z"), 0);
+    await db.query("update public.tasks set status = 'a-fazer' where id = $1", [id]);
+    assert.equal(await disp("2026-10-26T14:05:00Z"), 1);
+  });
+
+  await step("item apagado antes do horário não avisa", async () => {
+    const id = await task({ title: "Vai apagar", mins: 0, time: "12:00", date: "2026-10-27" });
+    await db.query("delete from public.tasks where id = $1", [id]);
+    assert.equal(await disp("2026-10-27T15:00:00Z"), 0);
+  });
+
+  await step("mudar o horário (ou o lembrete) antes do disparo reagenda o aviso, sem avisar no horário antigo", async () => {
+    const id = await task({ title: "Vai mudar", mins: 0, time: "09:00", date: "2026-10-28" });
+    await db.query("update public.tasks set time = '15:00' where id = $1", [id]);
+    assert.equal(await disp("2026-10-28T12:00:00Z"), 0, "09:00 antigo");
+    assert.equal(await disp("2026-10-28T18:00:00Z"), 1, "15:00 novo");
+    const id2 = await task({ title: "Vai mudar lembrete", mins: 60, time: "16:00", date: "2026-10-28" });
+    await db.query("update public.tasks set reminder_minutes = 15 where id = $1", [id2]);
+    assert.equal(await disp("2026-10-28T18:10:00Z"), 0, "1 h antes (agenda antiga) já não vale");
+    assert.equal(await disp("2026-10-28T18:44:59Z"), 0);
+    assert.equal(await disp("2026-10-28T18:45:00Z"), 1, "15 min antes de 16:00 em São Paulo");
+    assert.equal((await calls()).at(-1).tag, id2);
+  });
+
+  await step("item sem horário ou sem lembrete é ignorado", async () => {
+    await task({ title: "Sem horário", mins: 10, time: null, date: "2026-10-29" });
+    await task({ title: "Sem lembrete", mins: null, time: "10:00", date: "2026-10-29" });
+    assert.equal(await disp("2026-10-29T13:00:00Z"), 0);
+  });
+
+  await step("conta sem aparelho inscrito não perde o aviso: ele sai quando o aparelho aparece (dentro da tolerância)", async () => {
+    const D = await signup(db, "bia@exemplo.com");
+    const id = await task({ user: D, title: "Sem aparelho", mins: 0, time: "10:00", date: "2026-10-30" });
+    assert.equal(await disp("2026-10-30T13:00:00Z"), 0);
+    await sub(D, "https://push.test/phone-D");
+    assert.equal(await disp("2026-10-30T13:10:00Z"), 1);
+    assert.equal((await calls()).at(-1).tag, id);
+  });
+
+  await step("avisos muito atrasados (mais de 20 min) não saem", async () => {
+    await task({ title: "Atrasado demais", mins: 0, time: "10:00", date: "2026-10-31" });
+    assert.equal(await disp("2026-10-31T13:21:00Z"), 0);
+  });
+
+  await step("recorrência: cada ocorrência (linha própria) avisa na sua data, uma vez", async () => {
+    const o1 = await task({ title: "Fechar folha", mins: 15, time: "09:00", date: "2026-11-02" });
+    const o2 = await task({ title: "Fechar folha", mins: 15, time: "09:00", date: "2026-11-09" });
+    assert.equal(await disp("2026-11-02T11:45:00Z"), 1);
+    assert.equal((await calls()).at(-1).tag, o1);
+    assert.equal(await disp("2026-11-02T12:00:00Z"), 0, "a ocorrência já avisada não repete e a próxima ainda não chegou");
+    assert.equal(await disp("2026-11-09T11:45:00Z"), 1);
+    assert.equal((await calls()).at(-1).tag, o2);
+  });
+
+  await step("compromissos (events) também avisam, com o tipo certo", async () => {
+    const e = crypto.randomUUID();
+    await db.query("insert into public.events (id, user_id, title, context, start_date, start_time, event_type, reminder_minutes) values ($1, $2, 'Dentista', 'pessoal', '2026-11-03', '15:00', 'compromisso', 30)", [e, A]);
+    assert.equal(await disp("2026-11-03T17:29:59Z"), 0);
+    assert.equal(await disp("2026-11-03T17:30:00Z"), 1);
+    const n = (await calls()).at(-1);
+    assert.equal(n.tag, e);
+    assert.equal(n.kind, "compromisso");
+  });
+
+  await step("envio que falhou (HTTP 5xx) volta para a fila; o que deu certo (200) não repete", async () => {
+    const id = await task({ title: "Reenvio", mins: 0, time: "10:00", date: "2026-11-04" });
+    assert.equal(await disp("2026-11-04T13:00:00Z"), 1);
+    const reqId = (await db.query("select request_id from private.reminder_deliveries where entity_id = $1", [id])).rows[0].request_id;
+    assert.ok(reqId, "o id do pedido HTTP deveria ficar guardado");
+    await db.query("insert into net._http_response (id, status_code) values ($1, 502)", [reqId]);
+    assert.equal(await disp("2026-11-04T13:01:00Z"), 1, "502: reenviado");
+    const reqId2 = (await db.query("select request_id from private.reminder_deliveries where entity_id = $1", [id])).rows[0].request_id;
+    assert.notEqual(reqId2, reqId);
+    await db.query("insert into net._http_response (id, status_code) values ($1, 200)", [reqId2]);
+    assert.equal(await disp("2026-11-04T13:02:00Z"), 0, "200: não repete");
+  });
+
+  await step("inscrições: cada conta só vê/apaga as próprias (RLS)", async () => {
+    await as(db, B, async () => {
+      assert.equal(await count(db, "push_subscriptions"), 1);
+      assert.equal((await db.query("delete from public.push_subscriptions where endpoint like '%phone-A'")).affectedRows, 0);
+      assert.equal((await db.query("update public.push_subscriptions set device_name = 'x' where endpoint like '%phone-A'")).affectedRows, 0);
+      await rejects(db.query("insert into public.push_subscriptions (user_id, endpoint, p256dh, auth) values ($1, 'https://push.test/forjada', 'p', 'a')", [A]), /row-level security/, "inscrição para a conta A");
+    });
+  });
+
+  await step("register_push_subscription: registra para a conta logada, não duplica e passa o aparelho para quem o usa agora", async () => {
+    await as(db, B, async () => {
+      await db.query("select public.register_push_subscription('https://push.test/shared', 'k1', 'a1', 'Android')");
+      await db.query("select public.register_push_subscription('https://push.test/shared', 'k2', 'a2', null)");
+      const r = (await db.query("select count(*) n, max(p256dh) k, max(device_name) d from public.push_subscriptions where endpoint = 'https://push.test/shared'")).rows[0];
+      assert.equal(Number(r.n), 1, "mesmo navegador = uma inscrição");
+      assert.equal(r.k, "k2");
+      assert.equal(r.d, "Android", "o nome do aparelho é mantido quando não vem outro");
+    });
+    await as(db, A, async () => {
+      assert.equal(Number((await db.query("select count(*) n from public.push_subscriptions where endpoint = 'https://push.test/shared'")).rows[0].n), 0, "a Gabi não enxerga a inscrição da Duda");
+      await db.query("select public.register_push_subscription('https://push.test/shared', 'k3', 'a3', 'Tablet')");
+      assert.equal(Number((await db.query("select count(*) n from public.push_subscriptions where endpoint = 'https://push.test/shared'")).rows[0].n), 1);
+    });
+    await as(db, B, async () => {
+      assert.equal(Number((await db.query("select count(*) n from public.push_subscriptions where endpoint = 'https://push.test/shared'")).rows[0].n), 0, "o aparelho saiu da Duda: os avisos dela não vão mais para lá");
+    });
+  });
+
+  await step("sem login não registra; anon e authenticated não executam o disparo nem enxergam o schema private", async () => {
+    await asAnon(db, async () => {
+      await rejects(db.query("select public.register_push_subscription('https://push.test/x', 'p', 'a', null)"), /permission denied/, "anon registrando");
+      await rejects(db.query("select private.dispatch_reminders(now())"), /permission denied/, "anon disparando");
+    });
+    await as(db, A, async () => {
+      await rejects(db.query("select private.dispatch_reminders(now())"), /permission denied/, "authenticated disparando");
+      await rejects(db.query("select * from private.app_config"), /permission denied/, "authenticated lendo o segredo");
+      await rejects(db.query("select * from private.reminder_deliveries"), /permission denied/, "authenticated lendo envios");
+    });
+  });
+
+  await step("prune_push_subscriptions só funciona com o segredo certo", async () => {
+    await asAnon(db, async () => {
+      await rejects(db.query("select public.prune_push_subscriptions('errado', array['https://push.test/phone-A'])"), /forbidden/, "segredo errado");
+    });
+    assert.equal(Number((await db.query("select count(*) n from public.push_subscriptions where endpoint = 'https://push.test/phone-A'")).rows[0].n), 1);
+    await asAnon(db, async () => {
+      assert.equal(Number((await db.query("select public.prune_push_subscriptions('s3cret', array['https://push.test/phone-A']) n")).rows[0].n), 1);
+    });
+    assert.equal(Number((await db.query("select count(*) n from public.push_subscriptions where endpoint = 'https://push.test/phone-A'")).rows[0].n), 0);
+  });
+
+  await step("apagar a conta leva inscrições e envios dela (cascata)", async () => {
+    await db.query("delete from auth.users where id = $1", [B]);
+    assert.equal(Number((await db.query("select count(*) n from public.push_subscriptions where user_id = $1", [B])).rows[0].n), 0);
+    assert.equal(Number((await db.query("select count(*) n from private.reminder_deliveries where user_id = $1", [B])).rows[0].n), 0);
+  });
+
+  await step("lembrete só aceita 0..10080 minutos", async () => {
+    await rejects(db.query("insert into public.tasks (user_id, title, context, date, time, reminder_minutes) values ($1, 'x', 'pessoal', '2026-11-05', '10:00', -5)", [A]), /check constraint/, "negativo");
+    await rejects(db.query("insert into public.tasks (user_id, title, context, date, time, reminder_minutes) values ($1, 'x', 'pessoal', '2026-11-05', '10:00', 20000)", [A]), /check constraint/, "acima de 7 dias");
   });
   await db.close();
 }

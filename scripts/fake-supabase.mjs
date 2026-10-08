@@ -36,7 +36,18 @@ await db.exec(`
   grant usage on schema auth to anon, authenticated, service_role;
   grant execute on function auth.uid() to anon, authenticated, service_role;
 `);
+// imita o pg_net (net.http_post + net._http_response) para o disparo de lembretes
+await db.exec(`
+  create schema net;
+  create table net.calls (id bigserial primary key, url text, body jsonb, headers jsonb, handled boolean not null default false);
+  create function net.http_post(url text, body jsonb default '{}', params jsonb default '{}', headers jsonb default '{}', timeout_milliseconds int default 5000)
+    returns bigint language plpgsql as $$ declare i bigint; begin insert into net.calls (url, body, headers) values (url, body, headers) returning id into i; return i; end $$;
+  create table net._http_response (id bigint primary key, status_code int, content text, timed_out boolean, error_msg text, created timestamptz default now());
+`);
 for (const f of fs.readdirSync(root).filter((x) => x.endsWith(".sql")).sort()) await db.exec(fs.readFileSync(path.join(root, f), "utf8"));
+const PUSH_URL = process.env.FAKE_PUSH_URL || "http://localhost:3100/api/push/send";
+const PUSH_SECRET = process.env.FAKE_PUSH_SECRET || "segredo-de-teste-0123456789abcdef";
+await db.query("insert into private.app_config (key, value) values ('push_url', $1), ('push_secret', $2) on conflict (key) do update set value = excluded.value", [PUSH_URL, PUSH_SECRET]);
 
 // ------------------------------------------------------------------ JWT (HS256)
 const b64 = (o) => Buffer.from(typeof o === "string" ? o : JSON.stringify(o)).toString("base64url");
@@ -228,7 +239,24 @@ function orderBy(params) {
   return " order by " + o.split(",").map((p) => { const [c, d] = p.split("."); return `t.${ident(c)} ${d === "desc" ? "desc nulls last" : "asc"}`; }).join(", ");
 }
 
+async function handleRpc(req, res, url, body) {
+  const fn = ident(url.pathname.replace("/rest/v1/rpc/", ""));
+  const bearer = (req.headers.authorization ?? "").replace(/^Bearer /, "");
+  const claims = verify(bearer);
+  const role = claims?.role === "authenticated" ? "authenticated" : "anon";
+  const keys = Object.keys(body ?? {});
+  const args = keys.map((k) => body[k]);
+  const call = `select public.${fn}(${keys.map((k, i) => `${ident(k)} => $${i + 1}`).join(", ")}) as r`;
+  const out = await db.transaction(async (tx) => {
+    await tx.query(`set local role ${role}`);
+    await tx.query("select set_config('request.jwt.claim.sub', $1, true)", [claims?.sub ?? ""]);
+    return (await tx.query(call, args)).rows[0]?.r ?? null;
+  });
+  return send(res, 200, out);
+}
+
 async function handleRest(req, res, url, body) {
+  if (url.pathname.startsWith("/rest/v1/rpc/")) return handleRpc(req, res, url, body);
   const table = url.pathname.replace("/rest/v1/", "");
   const tableId = ident(table);
   const bearer = (req.headers.authorization ?? "").replace(/^Bearer /, "");
@@ -311,6 +339,24 @@ http.createServer(async (req, res) => {
     for await (const chunk of req) raw += chunk;
     const body = raw ? JSON.parse(raw) : {};
     if (url.pathname === "/__fake/outbox") return send(res, 200, outbox);
+    if (url.pathname === "/__fake/cron") {
+      // equivale a UM minuto do pg_cron: roda o disparo (no horario "now", se informado) e faz o que o pg_net faria
+      const now = body.now ?? new Date().toISOString();
+      const count = (await db.query("select private.dispatch_reminders($1::timestamptz) n", [now])).rows[0].n;
+      const calls = (await db.query("select id, url, body, headers from net.calls where not handled order by id")).rows;
+      const results = [];
+      for (const c of calls) {
+        let status = null, text = "", err = null;
+        try {
+          const r = await fetch(c.url, { method: "POST", headers: c.headers, body: JSON.stringify(c.body) });
+          status = r.status; text = await r.text();
+        } catch (e) { err = String(e); }
+        await db.query("insert into net._http_response (id, status_code, content, error_msg) values ($1, $2, $3, $4)", [c.id, status, text, err]);
+        await db.query("update net.calls set handled = true where id = $1", [c.id]);
+        results.push({ status, text });
+      }
+      return send(res, 200, { dispatched: count, results });
+    }
     if (url.pathname.startsWith("/auth/v1/")) return await handleAuth(req, res, url, body);
     if (url.pathname.startsWith("/rest/v1/")) return await handleRest(req, res, url, body);
     return send(res, 404, { message: "não emulado: " + url.pathname });

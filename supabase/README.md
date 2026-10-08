@@ -97,6 +97,19 @@ O app não tem botão de excluir conta: isso só acontece por ação sua no pain
 | `npm run test:live` | **No seu projeto** (ou no de teste): cria 2 contas descartáveis, tenta o acesso cruzado direto pela API do banco e as apaga no fim |
 | `npm run fake:supabase` | Supabase de teste local (auth + REST sobre o mesmo RLS) para rodar o app sem projeto: `NEXT_PUBLIC_SUPABASE_URL=http://localhost:54399 NEXT_PUBLIC_SUPABASE_ANON_KEY=fake-anon npm run dev` |
 
+## Notificações (lembretes)
+
+Migrations (rode nesta ordem, depois das anteriores): `20261010000000_reminders_schema.sql` (coluna `reminder_minutes`, tabela `push_subscriptions`) e `20261010000100_reminders_dispatch.sql` (função `private.dispatch_reminders`, registro de envios).
+
+Para ligar os avisos:
+1. Gere as chaves (`npx web-push generate-vapid-keys`) e o segredo do agendador; cadastre na Vercel `NEXT_PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`, `PUSH_CRON_SECRET` e faça um novo deploy.
+2. No Supabase, ative as extensões pg_net e pg_cron (Database > Extensions).
+3. Siga `supabase/manual/schedule_reminders.sql` (um passo por vez): grava endereço e segredo e agenda a função a cada minuto.
+
+Como funciona: o pg_cron chama `private.dispatch_reminders()` a cada minuto; ela acha os lembretes do minuto (usando o fuso de cada conta), grava cada envio em `private.reminder_deliveries` (único por item e horário, então nunca repete) e chama `/api/push/send` via pg_net com o segredo. O app envia o Web Push. Editar, apagar ou concluir um item muda o que a função encontra, sem precisar cancelar nada.
+
+iPhone/iPad: os avisos só funcionam com o ora na Tela de Início (Compartilhar > Adicionar à Tela de Início), iOS 16.4 ou mais novo.
+
 ## Futuro
 - Login com Google: o `/auth/callback` já troca o código OAuth por sessão; falta ativar o provedor no painel e adicionar o botão.
 - Novas migrations entram como novos arquivos em `supabase/migrations`, com nome em ordem crescente.

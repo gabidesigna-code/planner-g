@@ -50,5 +50,5 @@ function withCookies(target: NextResponse, from: NextResponse) {
 }
 
 export const config = {
-  matcher: ["/((?!api/|_next/static|_next/image|favicon.ico|icon.svg|apple-icon.png|brand/|.*\\.(?:png|svg|jpg|jpeg|webp|ico|woff2?)$).*)"],
+  matcher: ["/((?!api/|_next/static|_next/image|favicon.ico|icon.svg|apple-icon.png|brand/|icons/|sw.js|manifest.webmanifest|.*\\.(?:png|svg|jpg|jpeg|webp|ico|woff2?)$).*)"],
 };

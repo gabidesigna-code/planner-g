@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronRight, Star } from "lucide-react";
+import { Bell, ChevronRight, Star } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ItemMenuButton, useItemMenu } from "@/components/item-menu";
 import { SwipeRow } from "@/components/swipe-row";
@@ -10,6 +10,7 @@ import { CTX, detail } from "@/lib/context";
 import { relDay } from "@/lib/dates";
 import { dragProps, draggedId, isTaskDrag } from "@/lib/dnd";
 import { useApp } from "@/lib/app-context";
+import { reminderLabel } from "@/lib/reminders";
 import type { Task } from "@/types";
 
 /** Linha simples: título + uma linha de apoio. O resto vive no painel lateral. */
@@ -80,6 +81,7 @@ export function TaskItem({ task, showDay, showTime, reorderable }: { task: Task;
           </span>
         )}
         {task.priority === "urgente" && !done && <span className="text-urgent">urgente</span>}
+        {task.time && task.reminderMinutes !== undefined && !done && <Bell className="h-3 w-3" strokeWidth={1.8} aria-label={`Lembrete: ${reminderLabel(task.reminderMinutes)}`} role="img" />}
         {task.important && <Star className="h-3 w-3 fill-waiting text-waiting" strokeWidth={1.8} aria-label="Importante" role="img" />}
         {day && <span className={cn(day.late && !done && "text-urgent")}>{day.text}</span>}
         <ItemMenuButton

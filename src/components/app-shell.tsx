@@ -21,6 +21,7 @@ import { AppearanceSheet } from "@/features/appearance/appearance-sheet";
 import { Onboarding } from "@/features/profile/onboarding";
 import { ProfileView } from "@/features/profile/profile-view";
 import { useRealtime } from "@/hooks/use-realtime";
+import { usePush } from "@/hooks/use-push";
 import { supabaseBrowser } from "@/lib/supabase-browser";
 import { api as apiClient } from "@/services/api-client";
 import { MODE_KEY, PALETTE_KEY } from "@/theme/css";
@@ -44,6 +45,7 @@ export function AppShell() {
   const { tasks, categories, note: serverNote, ownerName, setOwnerName, account, ready, loadError, reload, refresh, saving, recent, toggle, toggleSub, update, remove, create, reorder } =
     useTasks({ repo: httpAgendaRepository, notify, notifyError });
   const note = useQuickNote({ serverNote, ready, notifyError });
+  const push = usePush({ notify, enabled: ready && !!account, hasReminders: tasks.some((t) => t.reminderMinutes !== undefined && t.status !== "concluido") });
   const [view, setView] = useState<ViewId>("hoje");
   const [filter, setFilter] = useState<ContextFilter>("tudo");
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -160,6 +162,7 @@ export function AppShell() {
   };
   const signOut = async () => {
     try {
+      await push.releaseDevice(); // este aparelho para de receber os avisos desta conta
       await supabaseBrowser().auth.signOut();
     } finally {
       // nada da conta fica para a próxima pessoa que usar este aparelho
@@ -172,7 +175,7 @@ export function AppShell() {
   if (!ownerName.trim()) return <Onboarding email={account.email} onSave={saveDisplayName} onSignOut={() => void signOut()} />;
 
   const api: AppApi = {
-    ownerName, account, saveDisplayName, signOut, tasks, today, now, filter, setFilter, selectedId, recent, toggle, toggleSub, update, remove, reorder,
+    ownerName, account, saveDisplayName, signOut, push, tasks, today, now, filter, setFilter, selectedId, recent, toggle, toggleSub, update, remove, reorder,
     toggleImportant, confirmRemove: setDeleting,
     openTask: setSelectedId, openAdd, openForm, navigate, openAppearance,
     categoryNames: (ctx) => categoryNames(categories, ctx),
@@ -257,6 +260,7 @@ export function AppShell() {
             setDeleting(null);
           }}
         />
+        {push.dialogs}
         <SyncBar saving={saving} />
         <Toast toast={toast} onDismiss={dismiss} />
       </div>

@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useRef, useState, type CSSProperties, type DragEvent, type MouseEvent } from "react";
-import { Star } from "lucide-react";
+import { Bell, Star } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { SwipeRow } from "@/components/swipe-row";
 import { useItemMenu } from "@/components/item-menu";
+import { reminderLabel } from "@/lib/reminders";
 import { cn } from "@/lib/utils";
 import { CTX } from "@/lib/context";
 import { fromMin, pad2, toMin } from "@/lib/dates";
@@ -239,6 +240,7 @@ function TimelineBlock({ t, h, style }: { t: Task; h: number; style: CSSProperti
           </span>
         )}
         <p className={cn("min-w-0 flex-1 truncate text-[0.875rem] font-semibold leading-tight lg:text-[0.9688rem] xl:text-[1rem] tracking-[-0.005em]", done && "line-through")}>{t.title}</p>
+        {t.reminderMinutes !== undefined && !done && <Bell className="h-3 w-3 shrink-0 text-muted-foreground" strokeWidth={1.8} aria-label={`Lembrete: ${reminderLabel(t.reminderMinutes)}`} role="img" />}
         {t.important && <Star className="h-3 w-3 shrink-0 fill-waiting text-waiting" strokeWidth={1.8} aria-label="Importante" role="img" />}
         <span className="shrink-0 font-mono text-[0.6563rem] tabular-nums text-cool lg:text-[0.7813rem] xl:text-[0.8125rem]">{t.time}</span>
       </div>

@@ -89,6 +89,10 @@ export const api = {
   oriPatchMessage: (id: string, patch: Record<string, unknown>) => call(`/api/ori/messages/${id}`, write("PATCH", patch)),
   /** Traz conversas antigas do aparelho para a conta (só quando a pessoa aceita). */
   oriImport: (conversations: unknown[]) => call<{ imported: number }>("/api/ori/conversations", send("POST", { conversations }), 60_000),
+  /** Notificações: inscrever/desinscrever este aparelho e mandar um aviso de teste (só para a própria conta). */
+  pushSubscribe: (body: { endpoint: string; keys: { p256dh: string; auth: string }; deviceName?: string }) => call("/api/push/subscribe", write("POST", body)),
+  pushUnsubscribe: (endpoint: string) => call("/api/push/subscribe", write("DELETE", { endpoint })),
+  pushTest: () => call<{ sent: number; failed: number }>("/api/push/test", write("POST")),
   getPreferences: () => call<Preferences>("/api/preferences"),
   savePreferences: (patch: Partial<Pick<Preferences, "themeMode" | "palette" | "displayName">>) =>
     call("/api/preferences", write("PUT", patch)),

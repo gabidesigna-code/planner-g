@@ -33,6 +33,8 @@ export interface Task {
   priority: Priority;
   /** Marcado como importante (estrela). Independe da prioridade. */
   important?: boolean;
+  /** Lembrete: minutos ANTES do horário em que a ori avisa (0 = na hora). Sem valor = sem lembrete. Só vale com horário. */
+  reminderMinutes?: number;
   status: Status;
   note?: string;
   /** Quem está sendo aguardado: cliente, banco, prefeitura, Receita, convênio… */

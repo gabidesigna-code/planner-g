@@ -1,12 +1,13 @@
 "use client";
 
 import { useState, type DragEvent } from "react";
-import { ChevronLeft, ChevronRight, Plus, Star } from "lucide-react";
+import { Bell, ChevronLeft, ChevronRight, Plus, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ContextSwitch } from "@/components/context-switch";
 import { ViewHeader } from "@/components/view-header";
 import { SwipeRow } from "@/components/swipe-row";
 import { useItemMenu } from "@/components/item-menu";
+import { reminderLabel } from "@/lib/reminders";
 import { cn } from "@/lib/utils";
 import { CTX } from "@/lib/context";
 import { addDays, byTime, monAbbr, pad2, sameDay, weekStart, weekdayShort } from "@/lib/dates";
@@ -38,9 +39,10 @@ function WeekCard({ t }: { t: Task }) {
       )}
     >
       <span className={cn("absolute inset-y-1.5 left-0 w-[0.125rem] rounded-full", CTX[t.context].bar)} />
-      {(t.time || t.important) && (
+      {(t.time || t.important || t.reminderMinutes !== undefined) && (
         <span className="flex items-center gap-1.5 font-mono text-[0.6563rem] tabular-nums text-muted-foreground">
           {t.time}
+          {t.time && t.reminderMinutes !== undefined && t.status !== "concluido" && <Bell className="h-2.5 w-2.5" strokeWidth={1.8} aria-label={`Lembrete: ${reminderLabel(t.reminderMinutes)}`} role="img" />}
           {t.important && <Star className="h-2.5 w-2.5 fill-waiting text-waiting" strokeWidth={1.8} aria-label="Importante" role="img" />}
         </span>
       )}

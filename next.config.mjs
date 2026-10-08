@@ -8,5 +8,11 @@ const anon = (process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.NEXT_PUBL
 const nextConfig = {
   reactStrictMode: true,
   env: { NEXT_PUBLIC_SUPABASE_URL: url, NEXT_PUBLIC_SUPABASE_ANON_KEY: anon },
+  async headers() {
+    return [
+      // o service worker nunca fica em cache: uma versão nova vale na próxima abertura
+      { source: "/sw.js", headers: [{ key: "Cache-Control", value: "no-cache, no-store, must-revalidate" }, { key: "Content-Type", value: "application/javascript; charset=utf-8" }] },
+    ];
+  },
 };
 export default nextConfig;

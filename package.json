@@ -12,7 +12,9 @@
     "test:greeting": "node --conditions=react-server --experimental-transform-types --no-warnings scripts/test-greeting.mjs",
     "export:ora": "node --experimental-transform-types --no-warnings scripts/export-ora-assets.mjs",
     "test:live": "node scripts/test-multiuser-live.mjs",
-    "fake:supabase": "node scripts/fake-supabase.mjs"
+    "fake:supabase": "node scripts/fake-supabase.mjs",
+    "export:pwa": "node scripts/export-pwa-icons.mjs",
+    "test:push": "node --conditions=react-server --experimental-transform-types --no-warnings scripts/test-push.mjs"
   },
   "dependencies": {
     "@radix-ui/react-checkbox": "^1.1.4",
@@ -26,6 +28,7 @@
     "react-dom": "^19.0.0",
     "server-only": "^0.0.1",
     "tailwind-merge": "^2.6.0",
+    "web-push": "^3.6.7",
     "zod": "^4.6.5"
   },
   "devDependencies": {
@@ -33,6 +36,7 @@
     "@types/node": "^22.10.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
+    "@types/web-push": "^3.6.4",
     "autoprefixer": "^10.4.20",
     "postcss": "^8.4.49",
     "tailwindcss": "^3.4.17",

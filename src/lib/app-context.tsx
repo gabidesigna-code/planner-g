@@ -2,6 +2,7 @@
 
 import { createContext, useContext } from "react";
 import type { Context, ContextFilter, Kind, Task } from "@/types";
+import type { PushApi } from "@/hooks/use-push";
 
 export type ViewId = "hoje" | "semana" | "calendario" | "tarefas" | "ori" | "trabalho" | "pessoal" | "concluidos" | "voce";
 
@@ -23,6 +24,8 @@ export interface AppApi {
   saveDisplayName: (name: string) => Promise<void>;
   /** Sai da conta e volta para a tela de entrada */
   signOut: () => Promise<void>;
+  /** Notificações deste aparelho (estado, ativar/desativar, teste) */
+  push: PushApi;
   tasks: Task[];
   today: Date;
   /** Hora atual (só no cliente, depois da hidratação) */

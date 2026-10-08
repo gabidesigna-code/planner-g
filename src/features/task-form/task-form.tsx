@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { CTX } from "@/lib/context";
 import { fromIso, fromMin, isoDate, toMin } from "@/lib/dates";
 import { useApp, type AddPreset } from "@/lib/app-context";
+import { REMINDER_OPTIONS, reminderToValue, valueToReminder } from "@/lib/reminders";
 import { useScrollLock } from "@/hooks/use-scroll-lock";
 import {
   KIND_LABEL, PRIORITY_LABEL, RECURRENCE_LABEL, STATUS_LABEL,
@@ -69,7 +70,7 @@ export function TaskForm(props: Props) {
 
 function FormBody({ kind: initialKind, preset, today, now, onClose, onSubmit }: Props) {
   useScrollLock(true);
-  const { categoryNames } = useApp();
+  const { categoryNames, push } = useApp();
   const titleRef = useRef<HTMLInputElement>(null);
 
   const defaultStart = () => {
@@ -94,6 +95,7 @@ function FormBody({ kind: initialKind, preset, today, now, onClose, onSubmit }: 
   const [location, setLocation] = useState("");
   const [note, setNote] = useState("");
   const [recurrence, setRecurrence] = useState<Recurrence>("none");
+  const [reminder, setReminder] = useState(""); // minutos antes, como texto ("" = sem lembrete)
   const [subs, setSubs] = useState<string[]>([]);
   const [newSub, setNewSub] = useState("");
   const [errors, setErrors] = useState<Partial<Record<"title" | "time" | "end" | "endDate", string>>>({});
@@ -156,6 +158,7 @@ function FormBody({ kind: initialKind, preset, today, now, onClose, onSubmit }: 
       endDate: kind === "evento" && endDate && endDate > date ? fromIso(endDate) : undefined,
       time: time || undefined,
       end: hasEnd && time && end ? end : undefined,
+      reminderMinutes: time ? valueToReminder(reminder) : undefined,
       priority: kind === "tarefa" ? priority : "normal",
       status: kind === "tarefa" ? status : "a-fazer",
       doneAt: kind === "tarefa" && status === "concluido" ? new Date() : undefined,
@@ -247,6 +250,17 @@ function FormBody({ kind: initialKind, preset, today, now, onClose, onSubmit }: 
             {hasEnd && (
               <Field label="Fim" error={errors.end}>
                 <input type="time" value={end} disabled={!time} onChange={(e) => setEnd(e.target.value)} className={cn(input, "disabled:opacity-40")} />
+              </Field>
+            )}
+            {time && (
+              <Field label="Lembrar" className="col-span-2">
+                <select
+                  value={reminder}
+                  onChange={(e) => { setReminder(e.target.value); if (e.target.value !== "") push.ask(); }}
+                  className={input}
+                >
+                  {REMINDER_OPTIONS.map((o) => <option key={o.label} value={reminderToValue(o.minutes)}>{o.label}</option>)}
+                </select>
               </Field>
             )}
 

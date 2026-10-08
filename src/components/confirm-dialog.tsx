@@ -7,11 +7,14 @@ import { useScrollLock } from "@/hooks/use-scroll-lock";
 import { cn } from "@/lib/utils";
 
 /** Confirmação curta: folha de baixo no celular, caixa centralizada no desktop. Foco inicial em "Cancelar". */
-export function ConfirmDialog({ open, title, body, confirmLabel, destructive, onConfirm, onCancel }: {
+export function ConfirmDialog({ open, title, body, confirmLabel, cancelLabel = "Cancelar", hideCancel, destructive, onConfirm, onCancel }: {
   open: boolean;
   title: string;
   body?: string;
   confirmLabel: string;
+  cancelLabel?: string;
+  /** só o botão de confirmar (avisos de "entendi") */
+  hideCancel?: boolean;
   destructive?: boolean;
   onConfirm: () => void;
   onCancel: () => void;
@@ -45,7 +48,7 @@ export function ConfirmDialog({ open, title, body, confirmLabel, destructive, on
         <h2 id="confirm-title" className="break-words text-[1.0625rem] font-semibold leading-snug tracking-[-0.01em]">{title}</h2>
         {body && <p id="confirm-body" className="mt-1.5 text-[0.875rem] leading-relaxed text-muted-foreground">{body}</p>}
         <div className="mt-5 flex gap-2">
-          <Button ref={cancelRef} variant="soft" className="flex-1" onClick={onCancel}>Cancelar</Button>
+          {!hideCancel && <Button ref={cancelRef} variant="soft" className="flex-1" onClick={onCancel}>{cancelLabel}</Button>}
           <Button className={cn("flex-1", destructive && "bg-urgent text-background")} onClick={onConfirm}>{confirmLabel}</Button>
         </div>
       </div>
