@@ -1,4 +1,10 @@
 -- ============================================================================
+-- ⛔ NÃO RODE ESTE ARQUIVO NO SEU PROJETO ATUAL.
+-- Ele é da época do esquema antigo e APAGA tabelas (inclusive `profiles`, que agora guarda o nome de cada conta)
+-- e todos os dados delas. Está aqui só como histórico. O esquema multiusuário atual está em supabase/migrations.
+-- ============================================================================
+
+-- ============================================================================
 -- gabi · LIMPEZA do esquema antigo (versão com login e vários usuários)
 --
 -- Só rode este arquivo se você JÁ executou as migrations antigas

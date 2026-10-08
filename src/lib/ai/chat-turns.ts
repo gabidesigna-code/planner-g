@@ -27,6 +27,21 @@ export interface OriMessage {
   pick?: string;
 }
 
+/** Uma conversa na lista (as mensagens são carregadas à parte). */
+export interface ConversationMeta {
+  id: string;
+  title: string;
+  createdAt: number;
+  updatedAt: number;
+  messageCount: number;
+}
+
+/** Título de uma conversa: o começo da primeira pergunta. */
+export const titleOf = (text: string) => {
+  const t = text.replace(/\s+/g, " ").trim();
+  return t.length > 56 ? `${t.slice(0, 55)}…` : t;
+};
+
 const itemSummary = (it: ProposedItem) => `${it.title} (${it.date}${it.time ? ` ${it.time}` : ""})`;
 const when = (t: TaskDto) => `${t.due}${t.time ? ` ${t.time}` : ""}`;
 const ref = (t: TaskDto) => t.id.slice(0, 8);

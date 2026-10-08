@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarDays, Columns3, Check, ListChecks, PanelLeftClose, PanelLeftOpen, Palette, Sun, type LucideIcon } from "lucide-react";
+import { CalendarDays, Columns3, Check, ListChecks, PanelLeftClose, PanelLeftOpen, Palette, Sun, UserRound, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "./theme-toggle";
 import { Monogram, OriMonogram, Wordmark } from "./brand/logo";
@@ -20,7 +20,10 @@ const GROUPS: Item[][] = [
     { id: "trabalho", label: "Trabalho", dot: "bg-work", key: "W" },
     { id: "pessoal", label: "Pessoal", dot: "bg-personal", key: "P" },
   ],
-  [{ id: "concluidos", label: "Concluídos", icon: Check, key: "D" }],
+  [
+    { id: "concluidos", label: "Concluídos", icon: Check, key: "D" },
+    { id: "voce", label: "Você", icon: UserRound, key: "V" },
+  ],
 ];
 
 interface Props {

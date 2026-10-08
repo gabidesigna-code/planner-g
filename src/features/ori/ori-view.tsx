@@ -8,7 +8,8 @@ import { OriMonogram, OriWordmark } from "@/components/brand/logo";
 import { toTask } from "@/features/ai/ai-panel";
 import { ChangeCard, useWhen } from "./change-card";
 import { useScrollLock } from "@/hooks/use-scroll-lock";
-import { useOriChats, type Conversation, type OriMessage } from "@/hooks/use-ori-chats";
+import { useOriChats, type ConversationMeta, type OriMessage } from "@/hooks/use-ori-chats";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 import { useApp } from "@/lib/app-context";
 import { CTX } from "@/lib/context";
 import { diffDays, fromIso, longDay } from "@/lib/dates";
@@ -130,25 +131,26 @@ function Bubble({ msg, children }: { msg: OriMessage; children?: React.ReactNode
 
 /* ------------------------------------------------------------------ histórico */
 
-function HistorySheet({ open, onClose, conversations, currentId, onOpen, onDelete, onNew }: {
+function HistorySheet({ open, onClose, conversations, currentId, onOpen, onAskDelete, onNew, blocked }: {
   open: boolean;
   onClose: () => void;
-  conversations: Conversation[];
+  conversations: ConversationMeta[];
   currentId: string | null;
   onOpen: (id: string) => void;
-  onDelete: (id: string) => void;
+  /** pede a confirmação (diálogo) antes de excluir */
+  onAskDelete: (c: ConversationMeta) => void;
   onNew: () => void;
+  /** um diálogo está aberto por cima: o Esc é dele */
+  blocked: boolean;
 }) {
   const { today } = useApp();
-  const [sure, setSure] = useState<string | null>(null);
   useScrollLock(open);
-  useEffect(() => { if (!open) setSure(null); }, [open]);
   useEffect(() => {
-    if (!open) return;
+    if (!open || blocked) return;
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") { e.stopPropagation(); onClose(); } };
     window.addEventListener("keydown", onKey, true);
     return () => window.removeEventListener("keydown", onKey, true);
-  }, [open, onClose]);
+  }, [open, onClose, blocked]);
   if (!open) return null;
 
   return (
@@ -168,19 +170,15 @@ function HistorySheet({ open, onClose, conversations, currentId, onOpen, onDelet
             <li key={c.id} className={cn("group flex items-center gap-1 rounded-lg", c.id === currentId && "bg-hover")}>
               <button onClick={() => { onOpen(c.id); onClose(); }} className="min-w-0 flex-1 rounded-lg px-3 py-2.5 text-left transition-colors hover:bg-hover">
                 <p className="truncate text-[0.9rem] font-medium">{c.title}</p>
-                <p className="mt-0.5 text-[0.74rem] text-muted-foreground">{dayLabel(c.updatedAt, today)} · {c.messages.length} {c.messages.length === 1 ? "mensagem" : "mensagens"}</p>
+                <p className="mt-0.5 text-[0.74rem] text-muted-foreground">{dayLabel(c.updatedAt, today)} · {c.messageCount} {c.messageCount === 1 ? "mensagem" : "mensagens"}</p>
               </button>
-              {sure === c.id ? (
-                <Button variant="ghost" size="sm" className="text-urgent" onClick={() => { onDelete(c.id); setSure(null); }}>Excluir?</Button>
-              ) : (
-                <button onClick={() => setSure(c.id)} aria-label={`Excluir conversa ${c.title}`} className="mr-1 grid h-9 w-9 shrink-0 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground sm:h-8 sm:w-8">
-                  <Trash2 className="h-3.5 w-3.5" strokeWidth={1.7} />
-                </button>
-              )}
+              <button onClick={() => onAskDelete(c)} aria-label={`Excluir conversa ${c.title}`} className="mr-1 grid h-9 w-9 shrink-0 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground sm:h-8 sm:w-8">
+                <Trash2 className="h-3.5 w-3.5" strokeWidth={1.7} />
+              </button>
             </li>
           ))}
         </ul>
-        <p className="border-t border-border px-4 py-2.5 text-[0.7rem] leading-snug text-muted-foreground">As conversas ficam guardadas neste aparelho.</p>
+        <p className="border-t border-border px-4 py-2.5 text-[0.7rem] leading-snug text-muted-foreground">As conversas ficam guardadas na sua conta e aparecem em qualquer aparelho em que você entrar.</p>
       </div>
     </div>
   );
@@ -189,8 +187,9 @@ function HistorySheet({ open, onClose, conversations, currentId, onOpen, onDelet
 /* ------------------------------------------------------------------ tela */
 
 export function OriView({ onCreate }: { onCreate: (t: Task) => void }) {
-  const { ownerName, today, tasks, toggle, update, remove } = useApp();
-  const chats = useOriChats();
+  const { ownerName, today, tasks, toggle, update, remove, account } = useApp();
+  const chats = useOriChats(account.userId);
+  const [deleting, setDeleting] = useState<ConversationMeta | null>(null);
   const when = useWhen();
   const [undo, setUndo] = useState<{ msgId: string; run: () => void } | null>(null);
   const undoTimer = useRef<number | undefined>(undefined);
@@ -287,6 +286,24 @@ export function OriView({ onCreate }: { onCreate: (t: Task) => void }) {
 
       <div ref={listRef} className="scroll-thin min-h-0 flex-1 overflow-y-auto px-4 py-5 sm:px-6">
         <div className="mx-auto flex min-h-full max-w-[44rem] flex-col gap-4">
+          {chats.legacy && (
+            <div role="status" className="rounded-xl border border-border bg-surface p-3.5 shadow-soft">
+              <p className="text-[0.875rem] leading-snug">
+                Encontrei {chats.legacy.conversations} {chats.legacy.conversations === 1 ? "conversa antiga" : "conversas antigas"} com a ori neste aparelho.
+                Quer trazer {chats.legacy.conversations === 1 ? "ela" : "elas"} para a sua conta?
+              </p>
+              <p className="mt-1 text-[0.75rem] leading-snug text-muted-foreground">Elas passam a aparecer em todos os seus aparelhos. Uma cópia continua guardada aqui.</p>
+              <div className="mt-3 flex gap-2">
+                <Button size="sm" disabled={chats.importing} onClick={() => void chats.importLegacy()}>{chats.importing ? "Importando…" : "Importar"}</Button>
+                <Button size="sm" variant="ghost" disabled={chats.importing} onClick={chats.dismissLegacy}>Agora não</Button>
+              </div>
+            </div>
+          )}
+          {chats.loadError && !chats.conversations.length && (
+            <div role="alert" className="flex items-center gap-3 rounded-xl bg-urgent-soft px-3.5 py-3 text-[0.85rem] text-urgent">
+              <span className="min-w-0 flex-1">{chats.loadError}</span>
+            </div>
+          )}
           {empty ? (
             <div className="animate-rise m-auto flex w-full max-w-[32rem] flex-col items-center py-8 text-center">
               <OriMonogram tile className="h-14 w-14" />
@@ -380,8 +397,18 @@ export function OriView({ onCreate }: { onCreate: (t: Task) => void }) {
         conversations={chats.conversations}
         currentId={chats.current?.id ?? null}
         onOpen={chats.open}
-        onDelete={chats.remove}
+        onAskDelete={setDeleting}
         onNew={chats.newChat}
+        blocked={!!deleting}
+      />
+      <ConfirmDialog
+        open={!!deleting}
+        title={deleting ? `Excluir a conversa “${deleting.title}”?` : ""}
+        body="As mensagens dela também serão apagadas, neste e nos outros aparelhos. Isso não pode ser desfeito."
+        confirmLabel="Excluir conversa"
+        destructive
+        onCancel={() => setDeleting(null)}
+        onConfirm={() => { if (deleting) chats.remove(deleting.id); setDeleting(null); }}
       />
     </div>
   );

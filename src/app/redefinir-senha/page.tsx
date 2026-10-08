@@ -1,11 +1,11 @@
-import { AppShell } from "@/components/app-shell";
+import { ResetPassword } from "@/components/auth/reset-password";
 import { SetupNotice } from "@/components/setup-notice";
 import { isSupabaseConfigured } from "@/lib/server/supabase";
 
-// A sessão é lida a cada acesso (o middleware já mandou para /login quem não está logado)
 export const dynamic = "force-dynamic";
+export const metadata = { title: "ora · senha nova" };
 
 export default function Page() {
   if (!isSupabaseConfigured()) return <SetupNotice />;
-  return <AppShell />;
+  return <ResetPassword />;
 }

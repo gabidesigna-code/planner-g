@@ -18,6 +18,12 @@ import { CalendarView } from "@/features/calendar/calendar-view";
 import { TasksView } from "@/features/tasks/tasks-view";
 import { OriView } from "@/features/ori/ori-view";
 import { AppearanceSheet } from "@/features/appearance/appearance-sheet";
+import { Onboarding } from "@/features/profile/onboarding";
+import { ProfileView } from "@/features/profile/profile-view";
+import { useRealtime } from "@/hooks/use-realtime";
+import { supabaseBrowser } from "@/lib/supabase-browser";
+import { api as apiClient } from "@/services/api-client";
+import { MODE_KEY, PALETTE_KEY } from "@/theme/css";
 import { ConfirmDialog } from "./confirm-dialog";
 import { useTheme } from "@/theme/theme-provider";
 import { AppCtx, type AddPreset, type AppApi, type ViewId } from "@/lib/app-context";
@@ -31,11 +37,11 @@ import { allCategoryNames, categoryNames } from "@/services/category-service";
 import { storage } from "@/services/storage";
 import type { ContextFilter, Kind } from "@/types";
 
-const GO: Record<string, ViewId> = { h: "hoje", s: "semana", c: "calendario", t: "tarefas", o: "ori", w: "trabalho", p: "pessoal", d: "concluidos" };
+const GO: Record<string, ViewId> = { h: "hoje", s: "semana", c: "calendario", t: "tarefas", o: "ori", w: "trabalho", p: "pessoal", d: "concluidos", v: "voce" };
 
 export function AppShell() {
   const { toast, notify, notifyError, dismiss } = useToast();
-  const { tasks, categories, note: serverNote, ownerName, ready, loadError, reload, saving, recent, toggle, toggleSub, update, remove, create, reorder } =
+  const { tasks, categories, note: serverNote, ownerName, setOwnerName, account, ready, loadError, reload, refresh, saving, recent, toggle, toggleSub, update, remove, create, reorder } =
     useTasks({ repo: httpAgendaRepository, notify, notifyError });
   const note = useQuickNote({ serverNote, ready, notifyError });
   const [view, setView] = useState<ViewId>("hoje");
@@ -124,8 +130,17 @@ export function AppShell() {
     return () => window.removeEventListener("keydown", onKey);
   }, [menu.open, form.open, appearance, ai.open, deleting, mobileNav, openAi, closeAi, openAdd, closeMenu, closeForm, navigate, toggleCollapsed, toggleMode]);
 
+  // Realtime: outro aparelho mexeu na agenda desta conta -> relê (a releitura a cada 15 s continua como reforço)
+  useRealtime(account ? `agenda:${account.userId}` : null, account ? [
+    { table: "tasks", filter: `user_id=eq.${account.userId}` },
+    { table: "events", filter: `user_id=eq.${account.userId}` },
+    { table: "subtasks", filter: `user_id=eq.${account.userId}` },
+    { table: "categories", filter: `user_id=eq.${account.userId}` },
+    { table: "profiles", filter: `id=eq.${account.userId}` },
+  ] : [], () => void refresh());
+
   if (loadError && !ready) return <LoadErrorScreen message={loadError} onRetry={reload} />;
-  if (!ready) return <LoadingScreen />;
+  if (!ready || !account) return <LoadingScreen />;
 
   const toggleImportant = (id: string) => {
     const t = tasks.find((x) => x.id === id);
@@ -133,8 +148,31 @@ export function AppShell() {
   };
   const deletingTask = deleting ? tasks.find((t) => t.id === deleting) : undefined;
 
+  const saveDisplayName = async (name: string) => {
+    const before = ownerName;
+    setOwnerName(name); // aparece na hora
+    try {
+      await apiClient.savePreferences({ displayName: name });
+    } catch (e) {
+      setOwnerName(before);
+      throw e;
+    }
+  };
+  const signOut = async () => {
+    try {
+      await supabaseBrowser().auth.signOut();
+    } finally {
+      // nada da conta fica para a próxima pessoa que usar este aparelho
+      for (const k of [PALETTE_KEY, MODE_KEY, "ora-greeting-v1", "ori-conversa-atual"]) storage.remove(k);
+      window.location.assign("/login");
+    }
+  };
+
+  // primeiro acesso desta conta: a ori pergunta como chamar a pessoa (o nome vai para o perfil, no banco)
+  if (!ownerName.trim()) return <Onboarding email={account.email} onSave={saveDisplayName} onSignOut={() => void signOut()} />;
+
   const api: AppApi = {
-    ownerName, tasks, today, now, filter, setFilter, selectedId, recent, toggle, toggleSub, update, remove, reorder,
+    ownerName, account, saveDisplayName, signOut, tasks, today, now, filter, setFilter, selectedId, recent, toggle, toggleSub, update, remove, reorder,
     toggleImportant, confirmRemove: setDeleting,
     openTask: setSelectedId, openAdd, openForm, navigate, openAppearance,
     categoryNames: (ctx) => categoryNames(categories, ctx),
@@ -148,6 +186,7 @@ export function AppShell() {
     case "semana": content = <WeekView />; break;
     case "calendario": content = <CalendarView />; break;
     case "ori": content = <OriView onCreate={create} />; break;
+    case "voce": content = <ProfileView />; break;
     default: content = <TasksView key={view} mode={view} />;
   }
 

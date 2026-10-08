@@ -3,7 +3,7 @@
 import { createContext, useContext } from "react";
 import type { Context, ContextFilter, Kind, Task } from "@/types";
 
-export type ViewId = "hoje" | "semana" | "calendario" | "tarefas" | "ori" | "trabalho" | "pessoal" | "concluidos";
+export type ViewId = "hoje" | "semana" | "calendario" | "tarefas" | "ori" | "trabalho" | "pessoal" | "concluidos" | "voce";
 
 /** Valores iniciais ao abrir o menu "Adicionar" ou o formulário. */
 export interface AddPreset {
@@ -15,8 +15,14 @@ export interface AddPreset {
 }
 
 export interface AppApi {
-  /** Nome usado na saudação da Home (vem das preferências) */
+  /** Como a ori chama a pessoa (perfil da conta logada); vazio = ainda não escolheu */
   ownerName: string;
+  /** A conta logada */
+  account: { userId: string; email: string | null };
+  /** Salva o nome na conta (aparece na hora e vale em todos os aparelhos) */
+  saveDisplayName: (name: string) => Promise<void>;
+  /** Sai da conta e volta para a tela de entrada */
+  signOut: () => Promise<void>;
   tasks: Task[];
   today: Date;
   /** Hora atual (só no cliente, depois da hidratação) */

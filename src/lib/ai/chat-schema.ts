@@ -14,11 +14,21 @@ export interface OriChatTurn {
   text: string;
 }
 
+/**
+ * Pedido ao chat da ori. A conversa mora no banco (por conta): o navegador manda SÓ a mensagem nova; o servidor
+ * monta a memória (as últimas ${MAX_CHAT_TURNS} mensagens) lendo a conversa DAQUELA conta, nunca texto de histórico enviado de fora.
+ * Sem `message` = tentar de novo a última pergunta já salva.
+ */
 export const chatRequestSchema = z.object({
-  messages: z
-    .array(z.object({ role: z.enum(["user", "ori"]), text: z.string().trim().min(1).max(MAX_CHAT_TEXT) }))
-    .min(1)
-    .max(MAX_CHAT_TURNS),
+  conversationId: z.string().uuid(),
+  message: z
+    .object({
+      id: z.string().uuid(),
+      text: z.string().trim().min(1).max(MAX_CHAT_TEXT),
+      /** item que a pessoa tocou ao responder "qual deles?" */
+      pick: z.string().regex(/^[0-9a-f]{6,36}$/i).optional(),
+    })
+    .optional(),
 });
 
 /** Resposta do modelo: texto + itens que ela PROPÕE criar + ações que ela PROPÕE sobre itens existentes. */

@@ -42,6 +42,7 @@ export function useTasks({ repo, notify, notifyError }: Options) {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [note, setNote] = useState("");
   const [ownerName, setOwnerName] = useState("");
+  const [account, setAccount] = useState<{ userId: string; email: string | null } | null>(null);
   const [pending, setPending] = useState(0);
   const [recent, setRecent] = useState<ReadonlySet<string>>(new Set());
 
@@ -72,6 +73,7 @@ export function useTasks({ repo, notify, notifyError }: Options) {
       setCategories(data.categories);
       setNote(data.note);
       setOwnerName(data.preferences.displayName);
+      setAccount(data.account);
       setReady(true);
     } catch (e) {
       setLoadError(e instanceof Error ? e.message : "Erro ao carregar");
@@ -324,5 +326,5 @@ export function useTasks({ repo, notify, notifyError }: Options) {
     scheduleSave(id);
   }, [apply, scheduleSave]);
 
-  return { tasks, categories, note, ownerName, ready, loadError, reload: load, refresh, saving: pending > 0, recent, toggle, toggleSub, update, remove, create, reorder };
+  return { tasks, categories, note, ownerName, setOwnerName, account, ready, loadError, reload: load, refresh, saving: pending > 0, recent, toggle, toggleSub, update, remove, create, reorder };
 }

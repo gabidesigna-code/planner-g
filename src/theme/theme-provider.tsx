@@ -85,6 +85,8 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
   /** Busca as preferências do servidor e aplica, se nada foi mexido aqui nesse meio-tempo. */
   const pull = useCallback(async () => {
+    // na tela de entrada ainda não há conta: não há preferências para buscar
+    if (window.location.pathname.startsWith("/login")) return;
     const started = currentEpoch();
     try {
       const prefs = await api.getPreferences();
