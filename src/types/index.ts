@@ -31,6 +31,8 @@ export interface Task {
   /** Cliente / empresa (só Trabalho) */
   client?: string;
   priority: Priority;
+  /** Marcado como importante (estrela). Independe da prioridade. */
+  important?: boolean;
   status: Status;
   note?: string;
   /** Quem está sendo aguardado: cliente, banco, prefeitura, Receita, convênio… */

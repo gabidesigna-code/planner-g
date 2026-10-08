@@ -95,7 +95,7 @@ async function readPreferences(db: Db): Promise<PreferencesDto> {
     row = await read();
   }
   return {
-    displayName: row?.display_name ?? "Gabriela",
+    displayName: row?.display_name ?? "",
     themeMode: row?.theme_mode ?? "system",
     palette: row?.palette ?? "oliva-vinho",
     untouched: !row || row.created_at === row.updated_at,
@@ -106,8 +106,9 @@ export async function getPreferences() {
   return readPreferences(getAdmin());
 }
 
-export async function savePreferences(patch: { themeMode?: ThemeMode; palette?: string }) {
+export async function savePreferences(patch: { themeMode?: ThemeMode; palette?: string; displayName?: string }) {
   const cols: Record<string, unknown> = { id: true };
+  if (patch.displayName !== undefined) cols.display_name = patch.displayName;
   if (patch.themeMode) cols.theme_mode = patch.themeMode;
   if (patch.palette) cols.palette = patch.palette;
   check((await getAdmin().from("preferences").upsert(cols, { onConflict: "id" })).error);
@@ -136,6 +137,17 @@ export async function saveNote(content: string) {
 
 // ------------------------------------------------------------------ agenda
 
+/**
+ * Banco ainda sem a coluna `important` (a migration 20261008 não foi rodada): grava o item sem ela, em vez de
+ * quebrar toda criação/edição. O restante do app segue normal; só a estrela não persiste até a migration rodar.
+ */
+const missingImportant = (e: Failure) => !!e && /important/i.test(e.message);
+const withoutImportant = <T extends { important?: unknown }>(cols: T) => {
+  console.warn("[agenda] coluna `important` ausente: rode supabase/migrations/20261008000000_important_and_display_name.sql");
+  const { important: _drop, ...rest } = cols;
+  return rest;
+};
+
 export async function loadAgenda(): Promise<AgendaPayload> {
   const db = getAdmin();
   const [catRows, taskRows, eventRows, recRows, note, preferences] = await Promise.all([
@@ -162,7 +174,9 @@ export async function createItem(task: Task): Promise<void> {
   const db = getAdmin();
   const cats = await categoryIndex(db);
   const table = tableFor(task.kind);
-  const { error } = await db.from(table).insert({ id: task.id, ...columnsFor(task, cats) });
+  const cols = columnsFor(task, cats);
+  let { error } = await db.from(table).insert({ id: task.id, ...cols });
+  if (missingImportant(error)) ({ error } = await db.from(table).insert({ id: task.id, ...withoutImportant(cols) }));
   if (error?.code === "23505") return updateItem(task); // já existe (reenvio): vira atualização
   check(error);
   try {
@@ -183,7 +197,9 @@ export async function updateItem(next: Task): Promise<void> {
   const db = getAdmin();
   const cats = await categoryIndex(db);
   const table = tableFor(next.kind);
-  const { data, error } = await db.from(table).update(columnsFor(next, cats)).eq("id", next.id).select("id");
+  const cols = columnsFor(next, cats);
+  let { data, error } = await db.from(table).update(cols).eq("id", next.id).select("id");
+  if (missingImportant(error)) ({ data, error } = await db.from(table).update(withoutImportant(cols)).eq("id", next.id).select("id"));
   check(error);
   if (!data?.length) throw new NotFoundError("Item não encontrado.");
 

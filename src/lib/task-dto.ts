@@ -19,6 +19,7 @@ export interface TaskDto {
   location?: string;
   client?: string;
   priority: Priority;
+  important?: boolean;
   status: Status;
   note?: string;
   waitingOn?: string;
@@ -33,7 +34,7 @@ export function toDto(t: Task): TaskDto {
     id: t.id, kind: t.kind, title: t.title, context: t.context, category: t.category, topic: t.topic,
     due: isoDate(t.due), endDate: t.endDate ? isoDate(t.endDate) : undefined,
     time: t.time, end: t.end, location: t.location, client: t.client,
-    priority: t.priority, status: t.status, note: t.note, waitingOn: t.waitingOn, recurrence: t.recurrence,
+    priority: t.priority, important: t.important || undefined, status: t.status, note: t.note, waitingOn: t.waitingOn, recurrence: t.recurrence,
     subtasks: t.subtasks?.map((s) => ({ id: s.id, title: s.title, done: s.done })),
     doneAt: t.doneAt ? t.doneAt.toISOString() : undefined,
     position: t.position,
@@ -45,7 +46,7 @@ export function fromDto(d: TaskDto): Task {
     id: d.id, kind: d.kind, title: d.title, context: d.context, category: d.category, topic: d.topic,
     due: fromIso(d.due), endDate: d.endDate ? fromIso(d.endDate) : undefined,
     time: d.time, end: d.end, location: d.location, client: d.client,
-    priority: d.priority, status: d.status, note: d.note, waitingOn: d.waitingOn, recurrence: d.recurrence,
+    priority: d.priority, important: d.important || undefined, status: d.status, note: d.note, waitingOn: d.waitingOn, recurrence: d.recurrence,
     subtasks: d.subtasks?.map((s) => ({ id: s.id, title: s.title, done: s.done })),
     doneAt: d.doneAt ? new Date(d.doneAt) : undefined,
     position: d.position,
@@ -119,6 +120,7 @@ export function parseTaskDto(input: unknown): TaskDto {
 
   const doneAt = str(o.doneAt, "doneAt", 40);
   if (doneAt && Number.isNaN(Date.parse(doneAt))) bad("doneAt inválido");
+  if (o.important !== undefined && typeof o.important !== "boolean") bad("importante inválido");
   if (o.position !== undefined && (typeof o.position !== "number" || !Number.isFinite(o.position))) bad("position inválida");
 
   return {
@@ -135,6 +137,7 @@ export function parseTaskDto(input: unknown): TaskDto {
     location: str(o.location, "local", 300),
     client: str(o.client, "cliente", 200),
     priority: oneOf<Priority>(o.priority, PRIORITIES, "prioridade"),
+    important: o.important === true ? true : undefined,
     status: oneOf<Status>(o.status, STATUSES, "status"),
     note: str(o.note, "observações", 10_000),
     waitingOn: str(o.waitingOn, "aguardando", 200),

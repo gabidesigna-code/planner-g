@@ -1,19 +1,57 @@
 "use client";
 
 import { useState, type DragEvent } from "react";
-import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ContextSwitch } from "@/components/context-switch";
 import { ViewHeader } from "@/components/view-header";
+import { SwipeRow } from "@/components/swipe-row";
+import { useItemMenu } from "@/components/item-menu";
 import { cn } from "@/lib/utils";
 import { CTX } from "@/lib/context";
 import { addDays, byTime, monAbbr, pad2, sameDay, weekStart, weekdayShort } from "@/lib/dates";
 import { dragProps, draggedId, isTaskDrag } from "@/lib/dnd";
 import { matches, useApp } from "@/lib/app-context";
 import { formatDuration, occursOn, scheduledMinutes } from "@/lib/task-utils";
+import type { Task } from "@/types";
+
+/** Um item da semana. No celular, deslizar para a esquerda revela Importante · Editar · Excluir. */
+function WeekCard({ t }: { t: Task }) {
+  const { openTask } = useApp();
+  const menu = useItemMenu(t);
+  return (
+    <SwipeRow
+      task={t}
+      compact
+      className="rounded-lg"
+      layerProps={{
+        ...dragProps(t.id),
+        role: "button",
+        tabIndex: 0,
+        onClick: () => openTask(t.id),
+        onKeyDown: (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openTask(t.id); } },
+        onContextMenu: menu.onContextMenu,
+      }}
+      layerClassName={cn(
+        "relative cursor-pointer rounded-lg py-2 pl-3 pr-1.5 text-left lg:py-1.5 transition-colors duration-100 hover:bg-hover active:cursor-grabbing",
+        t.status === "concluido" && "opacity-45",
+      )}
+    >
+      <span className={cn("absolute inset-y-1.5 left-0 w-[0.125rem] rounded-full", CTX[t.context].bar)} />
+      {(t.time || t.important) && (
+        <span className="flex items-center gap-1.5 font-mono text-[0.6563rem] tabular-nums text-muted-foreground">
+          {t.time}
+          {t.important && <Star className="h-2.5 w-2.5 fill-waiting text-waiting" strokeWidth={1.8} aria-label="Importante" role="img" />}
+        </span>
+      )}
+      <span className={cn("block text-[0.875rem] leading-snug lg:text-[0.8125rem]", t.status === "concluido" && "line-through")}>{t.title}</span>
+      {menu.menu}
+    </SwipeRow>
+  );
+}
 
 export function WeekView() {
-  const { tasks, today, filter, update, openTask, openAdd } = useApp();
+  const { tasks, today, filter, update, openAdd } = useApp();
   const [offset, setOffset] = useState(0);
   const [over, setOver] = useState<string | null>(null);
   const start = addDays(weekStart(today), offset * 7);
@@ -96,21 +134,7 @@ export function WeekView() {
               </div>
 
               <div className="flex flex-col gap-1">
-                {items.map((t) => (
-                  <button
-                    key={t.id}
-                    {...dragProps(t.id)}
-                    onClick={() => openTask(t.id)}
-                    className={cn(
-                      "relative cursor-pointer rounded-lg py-2 pl-3 pr-1.5 text-left lg:py-1.5 transition-colors duration-100 hover:bg-hover active:cursor-grabbing",
-                      t.status === "concluido" && "opacity-45",
-                    )}
-                  >
-                    <span className={cn("absolute inset-y-1.5 left-0 w-[0.125rem] rounded-full", CTX[t.context].bar)} />
-                    {t.time && <span className="block font-mono text-[0.6563rem] tabular-nums text-muted-foreground">{t.time}</span>}
-                    <span className={cn("block text-[0.875rem] leading-snug lg:text-[0.8125rem]", t.status === "concluido" && "line-through")}>{t.title}</span>
-                  </button>
-                ))}
+                {items.map((t) => <WeekCard key={t.id} t={t} />)}
               </div>
             </section>
           );

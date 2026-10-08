@@ -1,8 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, Star } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
+import { ItemMenuButton, useItemMenu } from "@/components/item-menu";
+import { SwipeRow } from "@/components/swipe-row";
 import { cn } from "@/lib/utils";
 import { CTX, detail } from "@/lib/context";
 import { relDay } from "@/lib/dates";
@@ -14,6 +16,7 @@ import type { Task } from "@/types";
 export function TaskItem({ task, showDay, showTime, reorderable }: { task: Task; showDay?: boolean; showTime?: boolean; reorderable?: boolean }) {
   const { toggle, openTask, today, selectedId, reorder } = useApp();
   const [over, setOver] = useState(false);
+  const menu = useItemMenu(task);
   const done = task.status === "concluido";
   const subs = task.subtasks ?? [];
   const subsDone = subs.filter((s) => s.done).length;
@@ -21,22 +24,27 @@ export function TaskItem({ task, showDay, showTime, reorderable }: { task: Task;
   const sub = [showTime ? task.time : undefined, detail(task)].filter(Boolean).join(" · ");
 
   return (
-    <div
-      {...dragProps(task.id)}
-      {...(reorderable && {
-        onDragOver: (e: React.DragEvent) => { if (isTaskDrag(e)) { e.preventDefault(); e.stopPropagation(); setOver(true); } },
-        onDragLeave: () => setOver(false),
-        onDrop: (e: React.DragEvent) => {
-          if (!isTaskDrag(e)) return;
-          e.preventDefault();
-          e.stopPropagation();
-          setOver(false);
-          reorder(draggedId(e), task.id);
-        },
-      })}
-      onClick={() => openTask(task.id)}
-      className={cn(
-        "group -mx-3 flex cursor-pointer items-start gap-3 rounded-lg px-3 py-3 transition-colors sm:py-2 lg:py-3 duration-100 active:cursor-grabbing",
+    <SwipeRow
+      task={task}
+      className="-mx-3 rounded-lg"
+      layerProps={{
+        ...dragProps(task.id),
+        ...(reorderable && {
+          onDragOver: (e: React.DragEvent) => { if (isTaskDrag(e)) { e.preventDefault(); e.stopPropagation(); setOver(true); } },
+          onDragLeave: () => setOver(false),
+          onDrop: (e: React.DragEvent) => {
+            if (!isTaskDrag(e)) return;
+            e.preventDefault();
+            e.stopPropagation();
+            setOver(false);
+            reorder(draggedId(e), task.id);
+          },
+        }),
+        onClick: () => openTask(task.id),
+        onContextMenu: menu.onContextMenu,
+      }}
+      layerClassName={cn(
+        "group flex cursor-pointer items-start gap-3 rounded-lg px-3 py-3 transition-colors sm:py-2 lg:py-3 duration-100 active:cursor-grabbing",
         "hover:bg-hover [&[draggable=true]:active]:opacity-60",
         selectedId === task.id && "bg-muted",
         over && "shadow-[inset_0_2px_0_hsl(var(--foreground)/0.4)]",
@@ -72,10 +80,17 @@ export function TaskItem({ task, showDay, showTime, reorderable }: { task: Task;
           </span>
         )}
         {task.priority === "urgente" && !done && <span className="text-urgent">urgente</span>}
+        {task.important && <Star className="h-3 w-3 fill-waiting text-waiting" strokeWidth={1.8} aria-label="Importante" role="img" />}
         {day && <span className={cn(day.late && !done && "text-urgent")}>{day.text}</span>}
-        <ChevronRight className="-mr-1 h-3.5 w-3.5 -translate-x-1 opacity-0 transition-all duration-150 group-hover:translate-x-0 group-hover:opacity-60" />
+        <ItemMenuButton
+          task={task}
+          menu={menu}
+          className="-my-1.5 -mr-1.5 h-8 w-8 lg:opacity-0 lg:transition-opacity lg:focus-visible:opacity-100 lg:group-hover:opacity-100"
+        />
+        <ChevronRight className="-mr-1 hidden h-3.5 w-3.5 -translate-x-1 opacity-0 transition-all duration-150 group-hover:translate-x-0 group-hover:opacity-60 lg:block" />
         <span className={cn("h-1.5 w-1.5 rounded-full", CTX[task.context].dot)} title={CTX[task.context].label} />
       </div>
-    </div>
+      {menu.menu}
+    </SwipeRow>
   );
 }

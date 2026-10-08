@@ -24,6 +24,7 @@ const line = (t: TaskDto) =>
     t.context === "trabalho" && t.client ? `trabalho/${clip(t.client, 30)}` : t.context,
     t.category && t.category !== "Outros" ? clip(t.category, 24) : null,
     t.priority !== "normal" ? `prioridade ${t.priority}` : null,
+    t.important ? "importante" : null,
     t.status,
     t.waitingOn ? `aguardando ${clip(t.waitingOn, 30)}` : null,
     t.recurrence && t.recurrence !== "none" ? `repete ${t.recurrence}` : null,

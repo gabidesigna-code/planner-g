@@ -42,6 +42,24 @@ await step("acesso restrito à service_role (access_control.sql)", async () => {
   if (!last || !String(last.resultado ?? last.rows[0].resultado).startsWith("OK")) throw new Error("o teste não terminou com OK");
 });
 
+await step("important: coluna em tasks e events, falso por padrão", async () => {
+  await db.exec("insert into public.tasks (title, context, date) values ('t', 'pessoal', current_date)");
+  await db.exec("insert into public.events (title, context, start_date) values ('e', 'pessoal', current_date)");
+  for (const t of ["tasks", "events"]) {
+    const r = await db.query(`select important from public.${t}`);
+    if (r.rows.length !== 1 || r.rows[0].important !== false) throw new Error(t + ": esperava important = false");
+    await db.exec(`update public.${t} set important = true`);
+    if ((await db.query(`select important from public.${t}`)).rows[0].important !== true) throw new Error(t + ": não gravou important");
+  }
+});
+
+await step("display_name sem nome fixo para novas instalações (a linha existente é mantida)", async () => {
+  const d = await db.query("select column_default from information_schema.columns where table_name = 'preferences' and column_name = 'display_name'");
+  if (!/^''/.test(d.rows[0].column_default)) throw new Error("padrão ainda é " + d.rows[0].column_default);
+  const row = await db.query("select display_name from public.preferences");
+  if (row.rows[0].display_name !== "Gabriela") throw new Error("a linha existente foi alterada: " + row.rows[0].display_name);
+});
+
 console.log(failed ? "\nFALHOU" : "\nOK: banco verificado");
 await db.close();
 process.exitCode = failed ? 1 : 0;

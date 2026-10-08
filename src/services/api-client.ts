@@ -73,6 +73,6 @@ export const api = {
   /** Chat da ori: a conversa recente em, resposta (e itens propostos) fora. Não grava nada. */
   oriChat: (messages: OriChatTurn[]) => call<OriChatResponse>("/api/ori/chat", write("POST", { messages }), 50_000),
   getPreferences: () => call<Preferences>("/api/preferences"),
-  savePreferences: (patch: Partial<Pick<Preferences, "themeMode" | "palette">>) =>
+  savePreferences: (patch: Partial<Pick<Preferences, "themeMode" | "palette" | "displayName">>) =>
     call("/api/preferences", write("PUT", patch)),
 };

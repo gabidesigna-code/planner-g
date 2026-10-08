@@ -31,6 +31,7 @@ export interface TaskRow {
   status: Status;
   waiting_on: string | null;
   priority: Priority;
+  important?: boolean;
   date: string;
   time: string | null;
   notes: string | null;
@@ -50,6 +51,7 @@ export interface EventRow {
   status: Status;
   waiting_on: string | null;
   priority: Priority;
+  important?: boolean;
   start_date: string;
   end_date: string | null;
   start_time: string | null;
@@ -124,6 +126,7 @@ export function taskFromRow(r: TaskRow, cats: CategoryIndex, recurrence?: Recurr
     time: hm(r.time),
     client: r.client_project ?? undefined,
     priority: r.priority,
+    important: r.important || undefined,
     status: r.status,
     note: r.notes ?? undefined,
     waitingOn: r.waiting_on ?? undefined,
@@ -149,6 +152,7 @@ export function eventFromRow(r: EventRow, cats: CategoryIndex, recurrence?: Recu
     location: r.location ?? undefined,
     client: r.client_project ?? undefined,
     priority: r.priority,
+    important: r.important || undefined,
     status: r.status,
     note: r.notes ?? undefined,
     waitingOn: r.waiting_on ?? undefined,
@@ -171,6 +175,7 @@ export function taskColumns(t: Task, cats: CategoryIndex) {
     status: t.status,
     waiting_on: t.waitingOn ?? null,
     priority: t.priority,
+    important: !!t.important,
     date: isoDate(t.due),
     time: t.time ?? null,
     notes: t.note ?? null,
@@ -191,6 +196,7 @@ export function eventColumns(t: Task, cats: CategoryIndex) {
     status: t.status,
     waiting_on: t.waitingOn ?? null,
     priority: t.priority,
+    important: !!t.important,
     start_date: isoDate(t.due),
     // o banco exige fim >= início; um fim anterior vira "sem data final"
     end_date: t.endDate && t.endDate.getTime() >= t.due.getTime() ? isoDate(t.endDate) : null,

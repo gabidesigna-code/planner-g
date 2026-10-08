@@ -10,8 +10,8 @@ const MODES = ["light", "dark", "system"];
 export const GET = route(async () => getPreferences());
 
 export const PUT = route(async (request) => {
-  const body = (await readJson(request)) as { themeMode?: unknown; palette?: unknown };
-  const patch: { themeMode?: ThemeMode; palette?: string } = {};
+  const body = (await readJson(request)) as { themeMode?: unknown; palette?: unknown; displayName?: unknown };
+  const patch: { themeMode?: ThemeMode; palette?: string; displayName?: string } = {};
   if (body.themeMode !== undefined) {
     if (typeof body.themeMode !== "string" || !MODES.includes(body.themeMode)) throw new ValidationError("modo inválido");
     patch.themeMode = body.themeMode as ThemeMode;
@@ -20,7 +20,12 @@ export const PUT = route(async (request) => {
     if (typeof body.palette !== "string" || !/^[a-z0-9-]{1,64}$/.test(body.palette)) throw new ValidationError("paleta inválida");
     patch.palette = body.palette;
   }
-  if (!patch.themeMode && !patch.palette) throw new ValidationError("nada para salvar");
+  if (body.displayName !== undefined) {
+    // nome que a ori usa na saudação (pode ficar vazio: ela só usa o nome quando existe)
+    if (typeof body.displayName !== "string" || body.displayName.trim().length > 40) throw new ValidationError("nome inválido");
+    patch.displayName = body.displayName.trim();
+  }
+  if (!patch.themeMode && !patch.palette && patch.displayName === undefined) throw new ValidationError("nada para salvar");
   await savePreferences(patch);
   return json({ ok: true });
 });

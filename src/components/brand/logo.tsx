@@ -1,4 +1,5 @@
 import { useId, type CSSProperties, type ReactNode } from "react";
+import { A_STROKE, MONO_NOTCH_DEPTH, MONO_R, MONO_STEM_X, MONO_STROKE, WORD_STROKE } from "./geometry";
 
 /**
  * Marca "ora" (o app) e "ori" (a assistente): sistema final G2.
@@ -59,8 +60,9 @@ function Notch({ children, cx, rx, wall, gap, depth, side }: { children: ReactNo
 
 /* ----------------------------------------------------------------------------- wordmarks */
 
-/** Medidas do wordmark (altura-x 60): traço 12, elipses largas, "a" de um andar. */
-const W = 12;
+/** Medidas do wordmark (altura-x 60): traço 12 no "o" e no "r", 9,5 no "a"; elipses largas, "a" de um andar. */
+const W = WORD_STROKE;
+const WA = A_STROKE; // o "a" é mais leve que o "o" e o "r" (ver geometry.ts)
 const CUT = 7; // abertura única do corte
 const G = (() => {
   const ro = 33;
@@ -70,7 +72,7 @@ const G = (() => {
   const stem = 2 * ro + 9 + W / 2;
   const armEnd = stem + 22;
   const aCx = armEnd + 14 + ro;
-  return { ro, rx, ry, top, oCx: ro, stem, armEnd, aCx, aStem: aCx + ro - W / 2, iStem: armEnd + 13 + W / 2, armY: top + 20 };
+  return { ro, rx, ry, top, oCx: ro, stem, armEnd, aCx, aRx: ro - WA / 2, aRy: 30 - WA / 2, aStem: aCx + ro - WA / 2, iStem: armEnd + 13 + W / 2, armY: top + 20 };
 })();
 
 const OShape = () => (
@@ -88,11 +90,13 @@ const RShape = () => (
 /** ora */
 export function Wordmark({ className, style, title = "ora", ink }: MarkProps) {
   return (
-    <svg viewBox={`-1 -62 ${G.aStem + W / 2 + 3} 64`} role="img" aria-label={title} className={className} style={{ ...(ink ? { color: ink } : null), ...style }}>
+    <svg viewBox={`-1 -62 ${G.aCx + G.ro + 3} 64`} role="img" aria-label={title} className={className} style={{ ...(ink ? { color: ink } : null), ...style }}>
       <g {...stroke(W)}>
         <OShape />
         <RShape />
-        <ellipse cx={G.aCx} cy={-30} rx={G.rx} ry={G.ry} />
+      </g>
+      <g {...stroke(WA)}>
+        <ellipse cx={G.aCx} cy={-30} rx={G.aRx} ry={G.aRy} />
         <path d={`M${G.aStem} 0V-60`} />
       </g>
     </svg>
@@ -125,14 +129,14 @@ function Frame({ tile, ink, bg, children }: { tile?: boolean; ink?: string; bg?:
   );
 }
 
-/** Ícone da ora: o "a" de um andar com o entalhe por fora, na parede esquerda do bojo. */
+/** Ícone da ora: o "a" de um andar (traço 12,5) com o entalhe por fora, na parede esquerda do bojo. */
 export function Monogram({ className, style, title = "ora", tile, ink, bg }: IconProps) {
   return (
     <svg viewBox="0 0 100 100" role="img" aria-label={title} className={className} style={{ ...(!tile && ink ? { color: ink } : null), ...style }}>
       <Frame tile={tile} ink={ink} bg={bg}>
-        <g transform="translate(50 50) scale(.82) translate(-30 30)" {...stroke(16)}>
-          <Notch cx={30} rx={22} wall={16} gap={CUT} depth={9} side="l"><circle cx={30} cy={-30} r={22} /></Notch>
-          <path d="M52 0V-60" />
+        <g transform="translate(50 50) scale(.82) translate(-30 30)" {...stroke(MONO_STROKE)}>
+          <Notch cx={30} rx={MONO_R} wall={MONO_STROKE} gap={CUT} depth={MONO_NOTCH_DEPTH} side="l"><circle cx={30} cy={-30} r={MONO_R} /></Notch>
+          <path d={`M${MONO_STEM_X} 0V-60`} />
         </g>
       </Frame>
     </svg>

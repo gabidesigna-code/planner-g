@@ -6,9 +6,10 @@ import { Button } from "@/components/ui/button";
 import { ContextSwitch } from "@/components/context-switch";
 import { DayTimeline } from "@/components/day-timeline";
 import { TaskItem } from "@/components/task-item";
+import { OriGreeting } from "./ori-greeting";
 import { cn } from "@/lib/utils";
 import { CTX } from "@/lib/context";
-import { addDays, byTime, dayTag, diffDays, greeting, monAbbr, pad2, weekdayName } from "@/lib/dates";
+import { addDays, byTime, dayTag, diffDays, monAbbr, pad2, weekdayName } from "@/lib/dates";
 import { draggedId, isTaskDrag } from "@/lib/dnd";
 import { isOpen, matches, useApp } from "@/lib/app-context";
 import { canBeOverdue, occursOn } from "@/lib/task-utils";
@@ -27,8 +28,7 @@ function SectionLabel({ children, right }: { children: React.ReactNode; right?: 
 }
 
 export function HomeView() {
-  const { tasks, today, now, filter, recent, update, openAdd, ownerName } = useApp();
-  const firstName = ownerName.trim().split(" ")[0];
+  const { tasks, today, filter, recent, update, openAdd } = useApp();
   const [peek, setPeek] = useState<Peek>(null);
   const [expanded, setExpanded] = useState<number | null>(null);
   const [dropDay, setDropDay] = useState<number | null>(null);
@@ -67,12 +67,12 @@ export function HomeView() {
     <div className="mx-auto w-full max-w-[45rem] px-4 pb-36 pt-6 sm:px-8 lg:max-w-[65rem] lg:px-8 lg:pt-8 xl:max-w-[73.75rem] 2xl:max-w-[87.5rem] sm:pb-32 sm:pt-16">
       <header className="animate-rise flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
         <div>
+          <div className="mb-5 sm:mb-6 lg:mb-5"><OriGreeting /></div>
           <p className="label-mono text-[0.75rem] text-work xl:text-[0.8125rem]">{weekdayName(today)}</p>
           <h1 className="mt-2 text-[5.25rem] font-bold leading-[0.82] tracking-[-0.065em] sm:text-[7.25rem] xl:text-[8.5rem] 2xl:text-[9.5rem]">
             {pad2(today.getDate())}{" "}
             <span className="text-work/55">{monAbbr(today).toUpperCase()}</span>
           </h1>
-          <p className="mt-4 min-h-[1.25rem] lg:mt-3 text-[0.875rem] text-muted-foreground lg:text-[0.9688rem] xl:text-[1rem]">{greeting(now)}{firstName ? `, ${firstName}` : ""}.</p>
         </div>
         <Button onClick={() => openAdd()} className="w-full shrink-0 sm:mt-1 sm:w-auto lg:mt-0 lg:h-10 lg:gap-2.5 lg:rounded-xl lg:px-5 lg:text-[0.9063rem] xl:h-11 xl:text-[0.9375rem]">
           <Plus className="h-4 w-4" strokeWidth={2} /> Adicionar <span className="kbd ml-1 hidden border-background/20 bg-background/10 text-background/70 sm:grid">N</span>

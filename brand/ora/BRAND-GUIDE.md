@@ -17,9 +17,9 @@
 
 | Peça | Descrição |
 |---|---|
-| **Wordmark ora** | "ora" em uma linha, letras largas (elipses), traço 12, "a" de um andar, terminais retos. Entalhe na parede direita do "o". |
+| **Wordmark ora** | "ora" em uma linha, letras largas (elipses), traço 12 no "o" e no "r" e **9,5 no "a"** (de um andar, mais leve e delicado), terminais retos. Entalhe na parede direita do "o". |
 | **Wordmark ori** | As mesmas letras "o" e "r" (mesmo entalhe) e o "i" com o ponto em ultramar. |
-| **Ícone ora** | O "a" de um andar (anel + haste), traço 16, com o entalhe na parede **esquerda** do bojo (a direita é a haste). |
+| **Ícone ora** | O "a" de um andar (anel + haste), traço **12,5**, com o entalhe na parede **esquerda** do bojo (a direita é a haste). |
 | **Ícone ori** | O anel inteiro, traço 16, com o entalhe na parede **direita** (como no "o" do wordmark) e o ponto de cor no canto. |
 
 Ícone, favicon, avatar e ícone do app são a mesma peça: o quadrado arredondado (cantos 22%) com o símbolo.
@@ -43,12 +43,13 @@
 Grade com **altura-x = 60** e linha de base em y = 0.
 
 - **Wordmark ora:** `viewBox="-1 -62 186 64"` · elipses de centro-linha rx 27 / ry 24 (externas 33 / 30), traço 12 ·
-  haste do "r" a 9 un. do "o"; ombro em quarto de elipse 22 × 20 · "a" de um andar (bojo + haste) a 14 un. do ombro.
+  haste do "r" a 9 un. do "o"; ombro em quarto de elipse 22 × 20 · "a" de um andar (bojo + haste) a 14 un. do ombro, **com traço 9,5**: as medidas externas do "a" não mudam (elipse externa 33 × 30, borda direita da haste em x = 183), então o bojo fica com centro-linha rx 28,25 / ry 25,25 e a haste em x = 178,25.
 - **Wordmark ori:** `viewBox="0 -92 130 94"` · ponto do "i": círculo de raio 8,64 (0,72 × traço), centro a y = -79.
 - **Entalhe do "o":** faixa horizontal de 7 un. de altura centrada em y = -30, removendo as 8 un. externas dos 12 da parede direita.
-- **Ícones:** `viewBox="0 0 100 100"`, quadrado `rx=22`. Ora: anel r=22 e traço 16, haste em x=52, entalhe de 7 un. removendo 9 das 16 un. da parede esquerda, símbolo a 82%.
+- **Ícones:** `viewBox="0 0 100 100"`, quadrado `rx=22`. Ora: anel de raio externo 30 com **traço 12,5** (centro-linha r=23,75), haste em x=53,75 (borda externa em x=60), entalhe de 7 un. removendo 7 das 12,5 un. da parede esquerda, símbolo a 82%.
   Ori: anel r=22, traço 16, entalhe na parede direita, ponto r=11 em (73, -64), símbolo a 66%.
-- Fonte única da verdade: `src/components/brand/logo.tsx`. Os SVGs em `brand/ora/svg/` são exportados desse componente.
+- Fonte única da verdade: `src/components/brand/logo.tsx` (e as medidas do "a" em `src/components/brand/geometry.ts`). Os SVGs/PNGs da **ora** em `brand/ora/`, `public/brand/` e os ícones do app são reexportados com `npm run export:ora`; a ori não é tocada.
+- **Refinamento do "a" (2026-10-08):** o "a" estava pesado ao lado do "o" e do "r". O traço dele caiu de 12 para 9,5 no wordmark (≈ -21%) e de 16 para 12,5 no ícone (≈ -22%), mantendo a mesma proporção, o mesmo tamanho externo e o mesmo entalhe. O "o", o "r" e a ori não mudaram (o anel da ori segue em 16).
 
 ## 5. Tamanhos e uso
 

@@ -1,7 +1,10 @@
 "use client";
 
-import { useEffect, useRef, useState, type DragEvent, type MouseEvent } from "react";
+import { useEffect, useRef, useState, type CSSProperties, type DragEvent, type MouseEvent } from "react";
+import { Star } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
+import { SwipeRow } from "@/components/swipe-row";
+import { useItemMenu } from "@/components/item-menu";
 import { cn } from "@/lib/utils";
 import { CTX } from "@/lib/context";
 import { fromMin, pad2, toMin } from "@/lib/dates";
@@ -65,7 +68,7 @@ function layout(tasks: Task[]): Ev[] {
 
 /** O dia como tempo: horas na lateral, blocos proporcionais à duração. */
 export function DayTimeline({ tasks }: { tasks: Task[] }) {
-  const { today, now, update, openTask, openAdd, toggle } = useApp();
+  const { today, now, update, openAdd } = useApp();
   const HOUR_H = useHourHeight();
   const ref = useRef<HTMLDivElement>(null);
   const [ghost, setGhost] = useState<number | null>(null);
@@ -169,48 +172,18 @@ export function DayTimeline({ tasks }: { tasks: Task[] }) {
         </div>
       )}
 
-      {evs.map(({ t, s, e, col, cols }) => {
-        const h = Math.max(((e - s) / 60) * HOUR_H - 5, 36);
-        const done = t.status === "concluido";
-        const ctx = CTX[t.context];
-        const checkable = t.kind === "tarefa" || t.kind === "lembrete";
-        return (
-          <div
-            key={t.id}
-            {...dragProps(t.id)}
-            onClick={(ev) => { ev.stopPropagation(); openTask(t.id); }}
-            className={cn(
-              "group absolute cursor-pointer overflow-hidden rounded-[0.625rem] pl-4 pr-2.5 lg:rounded-xl lg:pl-5 lg:pr-4 text-left transition-[background-color,opacity] duration-150",
-              "active:cursor-grabbing",
-              ctx.tint,
-              ctx.edge,
-              done && "opacity-50",
-            )}
-            style={{
-              top: topOf(s) + 2,
-              height: h,
-              left: `calc(var(--g) + 10px + (100% - var(--g) - 10px) * ${col / cols})`,
-              width: `calc((100% - var(--g) - 10px) / ${cols} - 4px)`,
-            }}
-          >
-            <span className={cn("absolute inset-y-0 left-0 w-1", ctx.bar)} />
-            <div className="flex items-center gap-2 pt-[0.4375rem] lg:gap-3 lg:pt-2">
-              {checkable && (
-                <span onClick={(ev) => ev.stopPropagation()} className="-ml-0.5 shrink-0">
-                  <Checkbox checked={done} tone={t.context} onCheckedChange={() => toggle(t.id)} aria-label={`Concluir ${t.title}`} className="h-4 w-4 lg:h-[1.125rem] lg:w-[1.125rem]" />
-                </span>
-              )}
-              <p className={cn("min-w-0 flex-1 truncate text-[0.875rem] font-semibold leading-tight lg:text-[0.9688rem] xl:text-[1rem] tracking-[-0.005em]", done && "line-through")}>{t.title}</p>
-              <span className="shrink-0 font-mono text-[0.6563rem] tabular-nums text-cool lg:text-[0.7813rem] xl:text-[0.8125rem]">{t.time}</span>
-            </div>
-            {h >= 48 && (
-              <p className="mt-0.5 truncate text-[0.75rem] text-muted-foreground lg:mt-1 lg:text-[0.8125rem]">
-                {[t.context === "trabalho" ? t.client : undefined, ctx.label].filter(Boolean).join(" · ")}
-              </p>
-            )}
-          </div>
-        );
-      })}
+      {evs.map(({ t, s, e, col, cols }) => (
+        <TimelineBlock
+          key={t.id}
+          t={t}
+          h={Math.max(((e - s) / 60) * HOUR_H - 5, 36)}
+          style={{
+            top: topOf(s) + 2,
+            left: `calc(var(--g) + 10px + (100% - var(--g) - 10px) * ${col / cols})`,
+            width: `calc((100% - var(--g) - 10px) / ${cols} - 4px)`,
+          }}
+        />
+      ))}
 
       {showNow && (
         <div className="pointer-events-none absolute inset-x-0 z-10" style={{ top: topOf(nowMin!) }}>
@@ -229,5 +202,52 @@ export function DayTimeline({ tasks }: { tasks: Task[] }) {
         </p>
       )}
     </div>
+  );
+}
+
+/** Um bloco da linha do tempo. No celular, deslizar para a esquerda revela Importante · Editar · Excluir. */
+function TimelineBlock({ t, h, style }: { t: Task; h: number; style: CSSProperties }) {
+  const { openTask, toggle } = useApp();
+  const menu = useItemMenu(t);
+  const done = t.status === "concluido";
+  const ctx = CTX[t.context];
+  const checkable = t.kind === "tarefa" || t.kind === "lembrete";
+  return (
+    <SwipeRow
+      task={t}
+      compact
+      className="absolute rounded-[0.625rem] lg:rounded-xl"
+      style={{ ...style, height: h }}
+      layerProps={{
+        ...dragProps(t.id),
+        onClick: (ev) => { ev.stopPropagation(); openTask(t.id); },
+        onContextMenu: menu.onContextMenu,
+      }}
+      layerClassName={cn(
+        "group h-full cursor-pointer overflow-hidden rounded-[0.625rem] pl-4 pr-2.5 lg:rounded-xl lg:pl-5 lg:pr-4 text-left transition-[background-color,opacity] duration-150",
+        "active:cursor-grabbing",
+        ctx.tint,
+        ctx.edge,
+        done && "opacity-50",
+      )}
+    >
+      <span className={cn("absolute inset-y-0 left-0 w-1", ctx.bar)} />
+      <div className="flex items-center gap-2 pt-[0.4375rem] lg:gap-3 lg:pt-2">
+        {checkable && (
+          <span onClick={(ev) => ev.stopPropagation()} className="-ml-0.5 shrink-0">
+            <Checkbox checked={done} tone={t.context} onCheckedChange={() => toggle(t.id)} aria-label={`Concluir ${t.title}`} className="h-4 w-4 lg:h-[1.125rem] lg:w-[1.125rem]" />
+          </span>
+        )}
+        <p className={cn("min-w-0 flex-1 truncate text-[0.875rem] font-semibold leading-tight lg:text-[0.9688rem] xl:text-[1rem] tracking-[-0.005em]", done && "line-through")}>{t.title}</p>
+        {t.important && <Star className="h-3 w-3 shrink-0 fill-waiting text-waiting" strokeWidth={1.8} aria-label="Importante" role="img" />}
+        <span className="shrink-0 font-mono text-[0.6563rem] tabular-nums text-cool lg:text-[0.7813rem] xl:text-[0.8125rem]">{t.time}</span>
+      </div>
+      {h >= 48 && (
+        <p className="mt-0.5 truncate text-[0.75rem] text-muted-foreground lg:mt-1 lg:text-[0.8125rem]">
+          {[t.context === "trabalho" ? t.client : undefined, ctx.label].filter(Boolean).join(" · ")}
+        </p>
+      )}
+      {menu.menu}
+    </SwipeRow>
   );
 }

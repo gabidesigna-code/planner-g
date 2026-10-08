@@ -18,6 +18,7 @@ import { CalendarView } from "@/features/calendar/calendar-view";
 import { TasksView } from "@/features/tasks/tasks-view";
 import { OriView } from "@/features/ori/ori-view";
 import { AppearanceSheet } from "@/features/appearance/appearance-sheet";
+import { ConfirmDialog } from "./confirm-dialog";
 import { useTheme } from "@/theme/theme-provider";
 import { AppCtx, type AddPreset, type AppApi, type ViewId } from "@/lib/app-context";
 import { startOfDay } from "@/lib/dates";
@@ -46,6 +47,7 @@ export function AppShell() {
   const [form, setForm] = useState<{ open: boolean; kind: Kind; preset: AddPreset }>({ open: false, kind: "tarefa", preset: {} });
   const [appearance, setAppearance] = useState(false);
   const [ai, setAi] = useState({ open: false, text: "" });
+  const [deleting, setDeleting] = useState<string | null>(null);
   const { toggleMode } = useTheme();
   const [now, setNow] = useState<Date | null>(null);
   const today = useMemo(() => startOfDay(), []);
@@ -93,6 +95,7 @@ export function AppShell() {
       const el = e.target as HTMLElement;
       const typing = el.matches?.("input, textarea, select, [contenteditable]");
       if (e.key === "Escape") {
+        if (deleting) return; // o diálogo fecha o próprio Esc
         if (ai.open) closeAi();
         else if (appearance) setAppearance(false);
         else if (form.open) closeForm();
@@ -101,7 +104,7 @@ export function AppShell() {
         else setSelectedId(null);
         return;
       }
-      if (typing || menu.open || form.open || appearance || ai.open) return;
+      if (typing || menu.open || form.open || appearance || ai.open || deleting) return;
       const k = e.key.toLowerCase();
       if (gPending.current) {
         gPending.current = false;
@@ -119,13 +122,20 @@ export function AppShell() {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [menu.open, form.open, appearance, ai.open, mobileNav, openAi, closeAi, openAdd, closeMenu, closeForm, navigate, toggleCollapsed, toggleMode]);
+  }, [menu.open, form.open, appearance, ai.open, deleting, mobileNav, openAi, closeAi, openAdd, closeMenu, closeForm, navigate, toggleCollapsed, toggleMode]);
 
   if (loadError && !ready) return <LoadErrorScreen message={loadError} onRetry={reload} />;
   if (!ready) return <LoadingScreen />;
 
+  const toggleImportant = (id: string) => {
+    const t = tasks.find((x) => x.id === id);
+    if (t) update(id, { important: !t.important });
+  };
+  const deletingTask = deleting ? tasks.find((t) => t.id === deleting) : undefined;
+
   const api: AppApi = {
     ownerName, tasks, today, now, filter, setFilter, selectedId, recent, toggle, toggleSub, update, remove, reorder,
+    toggleImportant, confirmRemove: setDeleting,
     openTask: setSelectedId, openAdd, openForm, navigate, openAppearance,
     categoryNames: (ctx) => categoryNames(categories, ctx),
     allCategoryNames: () => allCategoryNames(categories),
@@ -193,6 +203,21 @@ export function AppShell() {
         <AiPanel open={ai.open} initialText={ai.text} onClose={closeAi} onCreate={create} />
         <TaskForm open={form.open} kind={form.kind} preset={form.preset} today={today} now={now} onClose={closeForm} onSubmit={create} />
         <AppearanceSheet open={appearance} onClose={() => setAppearance(false)} />
+        <ConfirmDialog
+          open={!!deletingTask}
+          title={deletingTask ? `Excluir “${deletingTask.title}”?` : ""}
+          body="Você pode desfazer por alguns segundos."
+          confirmLabel="Excluir"
+          destructive
+          onCancel={() => setDeleting(null)}
+          onConfirm={() => {
+            if (deletingTask) {
+              if (selectedId === deletingTask.id) setSelectedId(null);
+              remove(deletingTask.id);
+            }
+            setDeleting(null);
+          }}
+        />
         <SyncBar saving={saving} />
         <Toast toast={toast} onDismiss={dismiss} />
       </div>

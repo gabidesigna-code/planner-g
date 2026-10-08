@@ -30,6 +30,10 @@ export interface AppApi {
   toggleSub: (id: string, subId: string) => void;
   update: (id: string, patch: Partial<Task>) => void;
   remove: (id: string) => void;
+  /** Alterna a estrela (importante) do item */
+  toggleImportant: (id: string) => void;
+  /** Pede a confirmação de exclusão (diálogo) e só então apaga, com "Desfazer" */
+  confirmRemove: (id: string) => void;
   reorder: (id: string, beforeId: string) => void;
   openTask: (id: string | null) => void;
   /** Menu "Adicionar" (escolhe o tipo ou cria rápido por texto) */

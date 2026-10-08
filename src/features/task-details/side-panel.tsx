@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
-import { Plus, Trash2, X } from "lucide-react";
+import { Plus, Star, Trash2, X } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 import { CTX } from "@/lib/context";
@@ -38,7 +38,7 @@ export function SidePanel() {
 }
 
 function PanelBody({ task }: { task: Task }) {
-  const { update, remove, toggle, toggleSub, openTask, today, categoryNames } = useApp();
+  const { update, remove, toggle, toggleSub, toggleImportant, openTask, today, categoryNames } = useApp();
   useScrollLock(true, "(max-width: 639px)");
   const [newSub, setNewSub] = useState("");
   const ctx = CTX[task.context];
@@ -66,6 +66,15 @@ function PanelBody({ task }: { task: Task }) {
           {ctx.label} · {KIND_LABEL[task.kind]}
         </div>
         <div className="flex items-center gap-0.5">
+          <button
+            onClick={() => toggleImportant(task.id)}
+            aria-label={task.important ? "Remover de importantes" : "Marcar como importante"}
+            aria-pressed={!!task.important}
+            title={task.important ? "Remover de importantes" : "Marcar como importante"}
+            className="grid h-10 w-10 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-hover hover:text-foreground sm:h-8 sm:w-8"
+          >
+            <Star className={cn("h-4 w-4", task.important && "fill-waiting text-waiting")} strokeWidth={1.6} />
+          </button>
           <button
             onClick={() => { remove(task.id); openTask(null); }}
             aria-label="Excluir"
