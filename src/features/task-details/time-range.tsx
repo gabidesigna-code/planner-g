@@ -40,19 +40,19 @@ export function TimeRange({ task, onChange, className, clearOnTimeOff }: {
       <div className="flex items-center gap-1">
         <input
           type="time" value={time} aria-label="Início"
-          onChange={(e) => { setTime(e.target.value); setError(""); run("time", e.target.value, false); }}
+          onChange={(e) => { setTime(e.target.value); setError(""); if (e.target.value) run("time", e.target.value, false); }} // vazio = campo pela metade: só vale ao sair do campo
           onBlur={() => (time === "" && task.time ? run("time", "", true) : HM.test(time) ? undefined : revert())}
           className={className}
         />
         <span className="text-muted-foreground/50">→</span>
         <input
           type="time" value={end} aria-label="Fim" disabled={!task.time}
-          onChange={(e) => { setEnd(e.target.value); setError(""); run("end", e.target.value, false); }}
+          onChange={(e) => { setEnd(e.target.value); setError(""); if (e.target.value) run("end", e.target.value, false); }}
           onBlur={() => {
             if (end === "" ) { if (task.end) run("end", "", true); return; }
             if (!HM.test(end)) { revert(); return; }
             const r = applyTimeEdit({ time: task.time, end: task.end, multiDay }, "end", end);
-            if (r && "error" in r) setError(r.error);
+            if (r && "error" in r) { setError(r.error); setEnd(task.end ?? ""); } // não deixa na tela um valor que não foi salvo
           }}
           className={cn(className, "disabled:opacity-40", error && "ring-1 ring-urgent")}
         />
