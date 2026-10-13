@@ -216,6 +216,7 @@ export async function chatWithOri(
   });
 
   const reply = chatReplySchema.safeParse(parsed);
+  if (!reply.success) console.error("[ai] ori schema", JSON.stringify(reply.error.issues).slice(0, 400));
   if (!reply.success) throw new AiError("A ori devolveu uma resposta fora do formato esperado. Tente de novo.", 502);
 
   const items = attachConflicts(normalizeItems({ items: reply.data.items }, ctx.categories), ctx.tasks);

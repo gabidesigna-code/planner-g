@@ -9,6 +9,7 @@ import { addDays, fromIso, isoDate, weekStart } from "@/lib/dates";
 import { useScrollLock } from "@/hooks/use-scroll-lock";
 import { useApp } from "@/lib/app-context";
 import { REMINDER_OPTIONS, reminderToValue, valueToReminder } from "@/lib/reminders";
+import { TimeRange } from "./time-range";
 import { TravelFields, TravelSummary, ConflictNotice } from "@/components/travel-fields";
 import { conflictsOfTask, spanOfTask } from "@/lib/travel";
 import {
@@ -147,11 +148,7 @@ function PanelBody({ task }: { task: Task }) {
           </Row>
         )}
         <Row label="Horário">
-          <div className="flex items-center gap-1">
-            <input type="time" value={task.time ?? ""} onChange={(e) => set({ time: e.target.value || undefined, end: e.target.value ? task.end : undefined, ...(e.target.value ? {} : { reminderMinutes: undefined, travelTo: undefined, travelFrom: undefined, reminderAtDeparture: undefined }) })} className={prop} aria-label="Início" />
-            <span className="text-muted-foreground/50">→</span>
-            <input type="time" value={task.end ?? ""} disabled={!task.time} onChange={(e) => set({ end: e.target.value || undefined })} className={cn(prop, "disabled:opacity-40")} aria-label="Fim" />
-          </div>
+          <TimeRange task={task} onChange={set} className={prop} clearOnTimeOff={{ reminderMinutes: undefined, travelTo: undefined, travelFrom: undefined, reminderAtDeparture: undefined }} />
         </Row>
         {task.time && (
           <Row label="Lembrar">

@@ -12,7 +12,7 @@ export const DEFAULT_GEMINI_MODEL = "gemini-3.5-flash-lite";
 const API_BASE = () => (process.env.GEMINI_API_BASE?.trim() || "https://generativelanguage.googleapis.com").replace(/\/+$/, "");
 const TIMEOUT_MS = 20_000;
 /** O Gemini às vezes responde 503 (alta demanda) por instantes: uma segunda tentativa costuma resolver. */
-const RETRY_STATUSES = [503];
+const RETRY_STATUSES = [500, 502, 503, 504];
 const TIMEZONE = "America/Sao_Paulo";
 
 export const isAiConfigured = () => Boolean(process.env.GEMINI_API_KEY?.trim());
@@ -213,26 +213,43 @@ export async function geminiGenerate(req: GeminiRequest): Promise<unknown> {
   let res: Response;
   try {
     res = await call();
-    if (RETRY_STATUSES.includes(res.status)) res = await call();
+    if (RETRY_STATUSES.includes(res.status)) {
+      await new Promise((r) => setTimeout(r, 700));
+      res = await call();
+    }
   } catch (e) {
     const timeout = e instanceof DOMException && e.name === "TimeoutError";
+    console.error("[ai] gemini fetch", model, timeout ? "timeout" : e instanceof Error ? `${e.name}: ${e.message}` : String(e));
     throw new AiError(timeout ? "A ori demorou demais para responder. Tente de novo." : "Não consegui falar com a ori agora.", 504);
   }
 
   if (!res.ok) {
-    console.error("[ai] gemini", res.status, (await res.text().catch(() => "")).slice(0, 300));
-    if (res.status === 400 || res.status === 401 || res.status === 403) throw new AiError("O Gemini recusou a chave ou o pedido. Confira a GEMINI_API_KEY e o modelo.", 502);
+    // Registra o erro REAL do provedor (status + mensagem, nunca a chave) para diagnosticar nos logs.
+    const text = (await res.text().catch(() => "")).slice(0, 500);
+    let detail = text;
+    try {
+      const j = JSON.parse(text) as { error?: { status?: string; message?: string } };
+      if (j.error) detail = `${j.error.status ?? ""} ${j.error.message ?? ""}`.trim();
+    } catch { /* o corpo não era JSON */ }
+    console.error("[ai] gemini", res.status, model, detail);
+    if (res.status === 401 || res.status === 403) throw new AiError("O Gemini recusou a chave. Confira a GEMINI_API_KEY no servidor.", 502);
+    if (res.status === 400) throw new AiError("O Gemini recusou o pedido da ori. Tente de novo; se repetir, avise para ajustarmos.", 502);
     if (res.status === 404) throw new AiError("O modelo do Gemini não está mais disponível. Troque o GEMINI_MODEL no servidor.", 502);
     if (res.status === 429) throw new AiError("Limite de uso do Gemini atingido. Tente de novo em instantes.", 429);
-    throw new AiError("O Gemini está indisponível agora. Tente de novo.", 502);
+    if (res.status === 503) throw new AiError("O Gemini está com muita demanda agora. Tente de novo em instantes.", 503);
+    throw new AiError(`O Gemini deu um erro inesperado (${res.status}). Tente de novo.`, 502);
   }
 
   const body = (await res.json().catch(() => null)) as { candidates?: { content?: { parts?: { text?: string }[] } }[] } | null;
   const raw = body?.candidates?.[0]?.content?.parts?.map((p) => p.text ?? "").join("").trim();
-  if (!raw) throw new AiError("A ori não devolveu nada. Tente de novo.", 502);
+  if (!raw) {
+    console.error("[ai] gemini vazio", model, JSON.stringify(body).slice(0, 300));
+    throw new AiError("A ori não devolveu nada. Tente de novo.", 502);
+  }
   try {
     return JSON.parse(raw);
   } catch {
+    console.error("[ai] gemini json ilegivel", model, raw.slice(0, 200));
     throw new AiError("A ori devolveu uma resposta ilegível. Tente de novo.", 502);
   }
 }
