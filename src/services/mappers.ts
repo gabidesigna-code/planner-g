@@ -36,6 +36,7 @@ export interface TaskRow {
   reminder_minutes?: number | null;
   date: string;
   time: string | null;
+  end_time?: string | null;
   notes: string | null;
   completed_at: string | null;
   position: number;
@@ -130,6 +131,7 @@ export function taskFromRow(r: TaskRow, cats: CategoryIndex, recurrence?: Recurr
     topic: r.topic ?? undefined,
     due: fromIso(r.date),
     time: hm(r.time),
+    end: hm(r.end_time ?? null),
     client: r.client_project ?? undefined,
     priority: r.priority,
     important: r.important || undefined,
@@ -190,6 +192,7 @@ export function taskColumns(t: Task, cats: CategoryIndex) {
     reminder_minutes: t.time ? (t.reminderMinutes ?? null) : null,
     date: isoDate(t.due),
     time: t.time ?? null,
+    end_time: t.time && t.end ? t.end : null,
     notes: t.note ?? null,
     completed_at: t.doneAt ? t.doneAt.toISOString() : null,
     position: t.position ?? 0,

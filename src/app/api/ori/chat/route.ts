@@ -9,6 +9,8 @@ import { toTurns } from "@/lib/ai/chat-turns";
 import { ValidationError } from "@/lib/task-dto";
 
 export const dynamic = "force-dynamic";
+// o Gemini pode levar dezenas de segundos com a agenda no contexto: sem isso a Vercel corta a rota antes do timeout daqui
+export const maxDuration = 60;
 
 /**
  * Chat da ori. Guarda a pergunta e a resposta NA CONVERSA DA CONTA LOGADA (banco, protegido por RLS) e devolve a resposta.

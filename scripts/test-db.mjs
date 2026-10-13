@@ -657,6 +657,23 @@ console.log("\nC) Lembretes e notificações (disparo agendado, sem duplicidade,
     await rejects(db.query("insert into public.tasks (user_id, title, context, date, time, reminder_minutes) values ($1, 'x', 'pessoal', '2026-11-05', '10:00', 20000)", [A]), /check constraint/, "acima de 7 dias");
   });
 
+  // ---- horário final em tarefas (migration 20261012): antes só events tinha end_time
+  await step("tarefa: fim 08:00→11:30 vira 08:00→09:00, aumenta, fica sem fim; fim precisa ser depois do início", async () => {
+    const id = crypto.randomUUID();
+    await db.query("insert into public.tasks (id, user_id, title, context, date, time, end_time) values ($1, $2, 'Tarefa com fim', 'pessoal', '2026-11-05', '08:00', '11:30')", [id, A]);
+    const get = async () => (await db.query("select time::text t, end_time::text e from public.tasks where id = $1", [id])).rows[0];
+    assert.deepEqual(await get(), { t: "08:00:00", e: "11:30:00" });
+    await db.query("update public.tasks set end_time = '09:00' where id = $1", [id]);
+    assert.equal((await get()).e, "09:00:00", "diminuir");
+    await db.query("update public.tasks set end_time = '12:00' where id = $1", [id]);
+    assert.equal((await get()).e, "12:00:00", "aumentar");
+    await rejects(db.query("update public.tasks set end_time = '07:00' where id = $1", [id]), /tasks_end_after_start/, "fim antes do início");
+    await rejects(db.query("update public.tasks set end_time = '08:00' where id = $1", [id]), /tasks_end_after_start/, "fim igual ao início");
+    await rejects(db.query("update public.tasks set time = null where id = $1", [id]), /tasks_end_after_start/, "fim sem início");
+    await db.query("update public.tasks set end_time = null where id = $1", [id]);
+    assert.equal((await get()).e, null, "sem fim");
+  });
+
   // ---- tempo de trajeto (migrations 20261011): colunas em events, RLS herdada e aviso "na hora de sair"
   const trip = async (o) => {
     const id = crypto.randomUUID();

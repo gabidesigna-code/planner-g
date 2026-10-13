@@ -154,10 +154,12 @@ export async function saveNote(db: Db, userId: string, content: string) {
  * Banco ainda sem a coluna `important` (a migration 20261008 não foi rodada): grava o item sem ela, em vez de
  * quebrar toda criação/edição. O restante do app segue normal; só a estrela não persiste até a migration rodar.
  */
-const missingImportant = (e: Failure) => !!e && /important|reminder_minutes|travel_(to|from)_minutes|reminder_at_departure/i.test(e.message);
+const missingImportant = (e: Failure) => !!e && /important|reminder_minutes|travel_(to|from)_minutes|reminder_at_departure|end_time/i.test(e.message);
 const withoutImportant = <T extends { important?: unknown; reminder_minutes?: unknown }>(cols: T) => {
   console.warn("[agenda] coluna `important`, `reminder_minutes` ou de trajeto ausente: rode as migrations pendentes de supabase/migrations");
   const { important: _a, reminder_minutes: _b, travel_to_minutes: _c, travel_from_minutes: _d, reminder_at_departure: _e, ...rest } = cols as T & Record<string, unknown>;
+  // tarefas sem a coluna end_time (migration pendente): só o fim some; em eventos end_time existe desde o início
+  if (!("start_time" in rest)) delete rest.end_time;
   return rest;
 };
 

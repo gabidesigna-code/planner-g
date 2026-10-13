@@ -6,6 +6,8 @@ import { MAX_AI_TEXT, type OrganizeResponse } from "@/lib/ai/schema";
 import { ValidationError } from "@/lib/task-dto";
 
 export const dynamic = "force-dynamic";
+// o Gemini pode levar dezenas de segundos com a agenda no contexto: sem isso a Vercel corta a rota antes do timeout daqui
+export const maxDuration = 60;
 
 /**
  * Linguagem natural → itens propostos. NÃO grava nada: devolve só a prévia (JSON validado).

@@ -9,6 +9,7 @@ register("./ts-alias-loader.mjs", pathToFileURL(path.join(import.meta.dirname, "
 process.env.GEMINI_API_KEY = "teste";
 const { geminiGenerate, AiError } = await import("@/lib/server/gemini");
 const { applyTimeEdit } = await import("@/lib/time-edit");
+const M = await import("@/services/mappers");
 
 let pass = 0, fail = 0;
 const check = async (name, fn) => {
@@ -71,6 +72,16 @@ await check("apagar o fim limpa só o fim; apagar o início limpa início e fim"
   assert.deepEqual(edit({ time: "08:00", end: "09:00" }, "time", "").patch, { time: undefined, end: undefined });
 });
 await check("sem início não dá para pôr fim", () => assert.equal(edit({}, "end", "10:00"), null));
+
+console.log("Fim em tarefas");
+const cats = new M.CategoryIndex([]);
+const tarefa = { id: "t1", kind: "tarefa", title: "x", context: "pessoal", category: "Outros", priority: "normal", status: "a-fazer", due: new Date(2026, 9, 20), time: "08:00", end: "09:00" };
+await check("tarefa grava end_time e relê o fim", () => {
+  const cols = M.taskColumns(tarefa, cats);
+  assert.equal(cols.end_time, "09:00");
+  assert.equal(M.taskFromRow({ ...cols, id: "t1", date: "2026-10-20", subtasks: [] }, cats).end, "09:00");
+});
+await check("tarefa sem horário não grava fim", () => assert.equal(M.taskColumns({ ...tarefa, time: undefined }, cats).end_time, null));
 
 console.log(`\n${pass} ok, ${fail} falhas`);
 process.exit(fail ? 1 : 0);

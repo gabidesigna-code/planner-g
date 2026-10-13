@@ -10,7 +10,7 @@ import { cleanTravel } from "@/lib/travel";
 /** Modelo centralizado: troque aqui ou pela variável GEMINI_MODEL, sem mexer no resto. */
 export const DEFAULT_GEMINI_MODEL = "gemini-3.5-flash-lite";
 const API_BASE = () => (process.env.GEMINI_API_BASE?.trim() || "https://generativelanguage.googleapis.com").replace(/\/+$/, "");
-const TIMEOUT_MS = 20_000;
+const TIMEOUT_MS = 40_000;
 /** O Gemini às vezes responde 503 (alta demanda) por instantes: uma segunda tentativa costuma resolver. */
 const RETRY_STATUSES = [500, 502, 503, 504];
 const TIMEZONE = "America/Sao_Paulo";
