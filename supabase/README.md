@@ -110,6 +110,10 @@ Como funciona: o pg_cron chama `private.dispatch_reminders()` a cada minuto; ela
 
 iPhone/iPad: os avisos só funcionam com o ora na Tela de Início (Compartilhar > Adicionar à Tela de Início), iOS 16.4 ou mais novo.
 
+## Tempo de trajeto (compromissos e eventos)
+
+Migrations (rode nesta ordem, depois das de lembretes): `20261011000000_travel_time.sql` (colunas `travel_to_minutes`, `travel_from_minutes` e `reminder_at_departure` em `events`) e `20261011000100_travel_reminders_dispatch.sql` (recria `private.dispatch_reminders` para avisar "na hora de sair"). Sem policies novas: as colunas ficam na mesma linha de `events` e seguem o RLS por `user_id`. O período ocupado (ida + compromisso + volta) não é gravado, é calculado pelo app.
+
 ## Futuro
 - Login com Google: o `/auth/callback` já troca o código OAuth por sessão; falta ativar o provedor no painel e adicionar o botão.
 - Novas migrations entram como novos arquivos em `supabase/migrations`, com nome em ordem crescente.

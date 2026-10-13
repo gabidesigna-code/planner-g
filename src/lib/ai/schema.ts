@@ -25,6 +25,9 @@ export const aiItemSchema = z.object({
   clientProject: z.string().trim().max(200).nullish(),
   notes: z.string().trim().max(2000).nullish(),
   recurrence: z.enum(["daily", "weekly", "monthly", "yearly"]).nullish(),
+  /** minutos de ida / de volta (só compromisso e evento com hora); null = não foi dito */
+  travelToMinutes: z.number().int().min(0).max(720).nullish(),
+  travelFromMinutes: z.number().int().min(0).max(720).nullish(),
 });
 
 /** Envelope: os itens são validados um a um depois (um item ruim não derruba os outros). */
@@ -45,6 +48,11 @@ export interface ProposedItem {
   client?: string;
   notes?: string;
   recurrence?: "daily" | "weekly" | "monthly" | "yearly";
+  /** minutos de ida ANTES do início e de volta DEPOIS do fim (só compromisso/evento com hora) */
+  travelTo?: number;
+  travelFrom?: number;
+  /** avisos já calculados pelo servidor: este item bate com outro compromisso ou com o trajeto dele */
+  conflicts?: string[];
 }
 
 export interface OrganizeResponse {

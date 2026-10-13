@@ -8,6 +8,8 @@ import { CTX } from "@/lib/context";
 import { fromIso, fromMin, isoDate, toMin } from "@/lib/dates";
 import { useApp, type AddPreset } from "@/lib/app-context";
 import { REMINDER_OPTIONS, reminderToValue, valueToReminder } from "@/lib/reminders";
+import { TravelFields, TravelSummary, ConflictNotice, type TravelValue } from "@/components/travel-fields";
+import { cleanTravel, findConflicts, occupantsOfTasks, spanOfTask } from "@/lib/travel";
 import { useScrollLock } from "@/hooks/use-scroll-lock";
 import {
   KIND_LABEL, PRIORITY_LABEL, RECURRENCE_LABEL, STATUS_LABEL,
@@ -70,7 +72,7 @@ export function TaskForm(props: Props) {
 
 function FormBody({ kind: initialKind, preset, today, now, onClose, onSubmit }: Props) {
   useScrollLock(true);
-  const { categoryNames, push } = useApp();
+  const { categoryNames, push, tasks } = useApp();
   const titleRef = useRef<HTMLInputElement>(null);
 
   const defaultStart = () => {
@@ -95,7 +97,8 @@ function FormBody({ kind: initialKind, preset, today, now, onClose, onSubmit }: 
   const [location, setLocation] = useState("");
   const [note, setNote] = useState("");
   const [recurrence, setRecurrence] = useState<Recurrence>("none");
-  const [reminder, setReminder] = useState(""); // minutos antes, como texto ("" = sem lembrete)
+  const [reminder, setReminder] = useState(""); // minutos antes, como texto ("" = sem lembrete; "leave" = na hora de sair)
+  const [travel, setTravel] = useState<TravelValue>({});
   const [subs, setSubs] = useState<string[]>([]);
   const [newSub, setNewSub] = useState("");
   const [errors, setErrors] = useState<Partial<Record<"title" | "time" | "end" | "endDate", string>>>({});
@@ -108,6 +111,15 @@ function FormBody({ kind: initialKind, preset, today, now, onClose, onSubmit }: 
   const hasEnd = kind === "compromisso" || kind === "evento";
   const ctx = CTX[context];
   const categories = categoryNames(context);
+
+  // trajeto: só compromisso/evento COM horário; o resumo e os avisos de conflito saem da mesma conta usada em toda a agenda
+  const travelTo = hasEnd && time ? cleanTravel(travel.to) : undefined;
+  const travelFrom = hasEnd && time ? cleanTravel(travel.from) : undefined;
+  const reminderValue = reminder === "leave" && !travelTo ? "" : reminder;
+  const span = hasEnd && time
+    ? spanOfTask({ kind, due: fromIso(date), endDate: kind === "evento" && endDate && endDate > date ? fromIso(endDate) : undefined, time, end: end || undefined, travelTo, travelFrom })
+    : null;
+  const conflicts = span ? findConflicts(span, undefined, occupantsOfTasks(tasks)) : [];
 
   function changeContext(c: Context) {
     setContext(c);
@@ -158,7 +170,10 @@ function FormBody({ kind: initialKind, preset, today, now, onClose, onSubmit }: 
       endDate: kind === "evento" && endDate && endDate > date ? fromIso(endDate) : undefined,
       time: time || undefined,
       end: hasEnd && time && end ? end : undefined,
-      reminderMinutes: time ? valueToReminder(reminder) : undefined,
+      reminderMinutes: time && reminderValue !== "leave" ? valueToReminder(reminderValue) : undefined,
+      travelTo,
+      travelFrom,
+      reminderAtDeparture: time && reminderValue === "leave" ? true : undefined,
       priority: kind === "tarefa" ? priority : "normal",
       status: kind === "tarefa" ? status : "a-fazer",
       doneAt: kind === "tarefa" && status === "concluido" ? new Date() : undefined,
@@ -255,13 +270,21 @@ function FormBody({ kind: initialKind, preset, today, now, onClose, onSubmit }: 
             {time && (
               <Field label="Lembrar" className="col-span-2">
                 <select
-                  value={reminder}
+                  value={reminderValue}
                   onChange={(e) => { setReminder(e.target.value); if (e.target.value !== "") push.ask(); }}
                   className={input}
                 >
                   {REMINDER_OPTIONS.map((o) => <option key={o.label} value={reminderToValue(o.minutes)}>{o.label}</option>)}
+                  {travelTo && <option value="leave">Na hora de sair</option>}
                 </select>
               </Field>
+            )}
+            {hasEnd && time && (
+              <div className="col-span-2 flex flex-col gap-2">
+                <TravelFields value={travel} onChange={setTravel} />
+                <TravelSummary span={span} />
+                <ConflictNotice conflicts={conflicts} />
+              </div>
             )}
 
             {kind !== "lembrete" && (
@@ -349,7 +372,7 @@ function FormBody({ kind: initialKind, preset, today, now, onClose, onSubmit }: 
 
         <div className="pb-safe flex items-center justify-end gap-2 border-t border-border px-4 py-3">
           <Button type="button" variant="ghost" onClick={onClose}>Cancelar</Button>
-          <Button type="submit">Salvar {KIND_LABEL[kind].toLowerCase()}</Button>
+          <Button type="submit">{conflicts.length ? "Salvar mesmo assim" : `Salvar ${KIND_LABEL[kind].toLowerCase()}`}</Button>
         </div>
       </form>
     </div>

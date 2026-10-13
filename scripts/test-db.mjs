@@ -656,6 +656,94 @@ console.log("\nC) Lembretes e notificações (disparo agendado, sem duplicidade,
     await rejects(db.query("insert into public.tasks (user_id, title, context, date, time, reminder_minutes) values ($1, 'x', 'pessoal', '2026-11-05', '10:00', -5)", [A]), /check constraint/, "negativo");
     await rejects(db.query("insert into public.tasks (user_id, title, context, date, time, reminder_minutes) values ($1, 'x', 'pessoal', '2026-11-05', '10:00', 20000)", [A]), /check constraint/, "acima de 7 dias");
   });
+
+  // ---- tempo de trajeto (migrations 20261011): colunas em events, RLS herdada e aviso "na hora de sair"
+  const trip = async (o) => {
+    const id = crypto.randomUUID();
+    await db.query(
+      "insert into public.events (id, user_id, title, context, start_date, start_time, end_time, event_type, travel_to_minutes, travel_from_minutes, reminder_at_departure, reminder_minutes) values ($1, $2, $3, 'pessoal', $4, $5, $6, 'compromisso', $7, $8, $9, $10)",
+      [id, o.user ?? A, o.title ?? "Consulta", o.date ?? "2026-11-10", o.start === undefined ? "15:00" : o.start, o.end === undefined ? "16:00" : o.end, o.to ?? null, o.from ?? null, o.leave ?? false, o.mins ?? null],
+    );
+    return id;
+  };
+
+  await step("trajeto: ida e volta independentes (vazio, 0, só ida, só volta, 80 min) e padrão = sem trajeto", async () => {
+    const both = await trip({ to: 20, from: 80 });
+    const onlyFrom = await trip({ to: 0, from: 30 });
+    const onlyTo = await trip({ to: 45, from: null });
+    const plain = await trip({});
+    const row = async (id) => (await db.query("select travel_to_minutes t, travel_from_minutes f, reminder_at_departure l from public.events where id = $1", [id])).rows[0];
+    assert.deepEqual(await row(both), { t: 20, f: 80, l: false });
+    assert.deepEqual(await row(onlyFrom), { t: 0, f: 30, l: false });
+    assert.deepEqual(await row(onlyTo), { t: 45, f: null, l: false });
+    assert.deepEqual(await row(plain), { t: null, f: null, l: false });
+    await db.query("update public.events set start_time = '16:00', end_time = '17:00', travel_to_minutes = 30, travel_from_minutes = 30 where id = $1", [both]);
+    assert.deepEqual(await row(both), { t: 30, f: 30, l: false }, "editar recalcula só mudando as colunas: o bloqueado nunca é gravado");
+    await db.query("delete from public.events where id = $1", [both]);
+    assert.equal((await db.query("select 1 from public.events where id = $1", [both])).rows.length, 0, "apagar o evento apaga o trajeto junto");
+  });
+
+  await step("trajeto: limites (0..720), sem negativos e só com horário", async () => {
+    const ins = (cols, vals) => db.query(`insert into public.events (user_id, title, context, start_date, event_type, ${cols}) values ($1, 'x', 'pessoal', '2026-11-11', 'compromisso', ${vals})`, [A]);
+    await rejects(ins("start_time, travel_to_minutes", "'10:00', -1"), /check constraint/, "ida negativa");
+    await rejects(ins("start_time, travel_from_minutes", "'10:00', 721"), /check constraint/, "volta acima de 12 h");
+    await rejects(ins("travel_to_minutes", "20"), /events_travel_needs_time/, "ida sem horário");
+    await rejects(ins("reminder_at_departure", "true"), /events_travel_needs_time/, "aviso de saída sem horário");
+    await ins("start_time, travel_to_minutes, travel_from_minutes", "'10:00', 720, 720");
+    await ins("travel_to_minutes, travel_from_minutes", "0, null");
+  });
+
+  await step("trajeto: RLS — outra conta não vê nem altera o trajeto de quem é dono", async () => {
+    const C = await signup(db, "carol@exemplo.com");
+    const id = await trip({ to: 20, from: 80, title: "Só da Gabi" });
+    await as(db, C, async () => {
+      assert.equal((await db.query("select 1 from public.events where id = $1", [id])).rows.length, 0, "não enxerga");
+      await db.query("update public.events set travel_to_minutes = 1 where id = $1", [id]);
+      await db.query("delete from public.events where id = $1", [id]);
+    });
+    const r = (await db.query("select travel_to_minutes t, travel_from_minutes f from public.events where id = $1", [id])).rows;
+    assert.deepEqual(r, [{ t: 20, f: 80 }], "continua intacto");
+    await as(db, A, async () => {
+      assert.equal((await db.query("select 1 from public.events where id = $1", [id])).rows.length, 1, "a dona enxerga");
+    });
+    await rejects(as(db, C, () => db.query("insert into public.events (user_id, title, context, start_date, event_type, start_time, travel_to_minutes) values ($1, 'x', 'pessoal', '2026-11-11', 'compromisso', '10:00', 5)", [A])), /row-level security/, "criar em nome de outra conta");
+  });
+
+  await step("aviso 'na hora de sair' = início − ida, no fuso da conta, e leva at_departure; muda junto com a ida", async () => {
+    // 15:00 em São Paulo = 18:00 UTC; ida de 20 min → avisa 14:40 (17:40 UTC)
+    const id = await trip({ title: "Consulta", date: "2026-11-12", to: 20, from: 80, leave: true });
+    assert.equal(await disp("2026-11-12T17:39:59Z"), 0, "antes de sair");
+    assert.equal(await disp("2026-11-12T17:40:00Z"), 1, "na hora de sair");
+    const n = (await calls()).at(-1);
+    assert.equal(n.tag, id);
+    assert.equal(n.at_departure, true);
+    assert.equal(n.minutes_before, 20);
+    assert.equal(n.time, "15:00");
+    assert.equal(await disp("2026-11-12T17:41:00Z"), 0, "não repete");
+
+    // ida de 30 min → o aviso vai para 14:30 (17:30 UTC), recalculado a partir dos dados atuais
+    const id2 = await trip({ title: "Dentista", date: "2026-11-13", to: 20, from: 0, leave: true });
+    await db.query("update public.events set travel_to_minutes = 30 where id = $1", [id2]);
+    assert.equal(await disp("2026-11-13T17:29:59Z"), 0);
+    assert.equal(await disp("2026-11-13T17:30:00Z"), 1);
+    assert.equal((await calls()).at(-1).minutes_before, 30);
+  });
+
+  await step("aviso comum continua igual em evento com trajeto (minutos antes do início, at_departure = false)", async () => {
+    await trip({ title: "Reunião", date: "2026-11-14", to: 20, from: 20, mins: 10 });
+    assert.equal(await disp("2026-11-14T17:49:59Z"), 0);
+    assert.equal(await disp("2026-11-14T17:50:00Z"), 1);
+    const n = (await calls()).at(-1);
+    assert.equal(n.at_departure, false);
+    assert.equal(n.minutes_before, 10);
+  });
+
+  await step("concluído não avisa saída", async () => {
+    const id = await trip({ title: "Feito", date: "2026-11-15", to: 20, leave: true });
+    await db.query("update public.events set status = 'concluido' where id = $1", [id]);
+    assert.equal(await disp("2026-11-15T17:40:00Z"), 0);
+  });
+
   await db.close();
 }
 

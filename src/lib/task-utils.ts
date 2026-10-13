@@ -1,4 +1,5 @@
 import { diffDays, toMin } from "./dates";
+import { spanOfTask } from "./travel";
 import type { Task } from "@/types";
 
 /** O item ocorre neste dia? (eventos podem durar vários dias) */
@@ -10,12 +11,13 @@ export function occursOn(t: Task, day: Date) {
 /** Só tarefas e lembretes "atrasam"; compromisso passado simplesmente passou. */
 export const canBeOverdue = (t: Task) => t.kind === "tarefa" || t.kind === "lembrete";
 
-/** Minutos ocupados por itens com horário (sem fim = 1h). */
+/** Minutos ocupados por itens com horário (sem fim = 1h). Compromisso com trajeto conta ida e volta também. */
 export function scheduledMinutes(items: Task[]) {
   return items.reduce((sum, t) => {
     if (!t.time) return sum;
     const end = t.end ? toMin(t.end) : toMin(t.time) + 60;
-    return sum + Math.max(end - toMin(t.time), 15);
+    const travel = spanOfTask(t) ? (t.travelTo ?? 0) + (t.travelFrom ?? 0) : 0;
+    return sum + Math.max(end - toMin(t.time), 15) + travel;
   }, 0);
 }
 

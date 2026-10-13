@@ -1,4 +1,5 @@
 import { fromIso, isoDate } from "@/lib/dates";
+import { cleanTravel } from "@/lib/travel";
 import {
   NO_CATEGORY,
   type Category, type Context, type Kind, type Priority, type Recurrence, type Status, type Subtask, type Task,
@@ -54,6 +55,9 @@ export interface EventRow {
   priority: Priority;
   important?: boolean;
   reminder_minutes?: number | null;
+  travel_to_minutes?: number | null;
+  travel_from_minutes?: number | null;
+  reminder_at_departure?: boolean;
   start_date: string;
   end_date: string | null;
   start_time: string | null;
@@ -157,6 +161,9 @@ export function eventFromRow(r: EventRow, cats: CategoryIndex, recurrence?: Recu
     priority: r.priority,
     important: r.important || undefined,
     reminderMinutes: r.reminder_minutes ?? undefined,
+    travelTo: r.travel_to_minutes || undefined,
+    travelFrom: r.travel_from_minutes || undefined,
+    reminderAtDeparture: r.reminder_at_departure || undefined,
     status: r.status,
     note: r.notes ?? undefined,
     waitingOn: r.waiting_on ?? undefined,
@@ -191,6 +198,10 @@ export function taskColumns(t: Task, cats: CategoryIndex) {
 
 /** Colunas editáveis de um compromisso/evento (sem o id). */
 export function eventColumns(t: Task, cats: CategoryIndex) {
+  // trajeto só vale com horário; "na hora de sair" só vale com ida
+  const travelTo = t.time ? cleanTravel(t.travelTo) : undefined;
+  const travelFrom = t.time ? cleanTravel(t.travelFrom) : undefined;
+  const atDeparture = !!travelTo && !!t.reminderAtDeparture;
   return {
     event_type: t.kind as "compromisso" | "evento",
     title: t.title.trim(),
@@ -202,7 +213,10 @@ export function eventColumns(t: Task, cats: CategoryIndex) {
     waiting_on: t.waitingOn ?? null,
     priority: t.priority,
     important: !!t.important,
-    reminder_minutes: t.time ? (t.reminderMinutes ?? null) : null,
+    reminder_minutes: t.time && !atDeparture ? (t.reminderMinutes ?? null) : null,
+    travel_to_minutes: travelTo ?? null,
+    travel_from_minutes: travelFrom ?? null,
+    reminder_at_departure: atDeparture,
     start_date: isoDate(t.due),
     // o banco exige fim >= início; um fim anterior vira "sem data final"
     end_date: t.endDate && t.endDate.getTime() >= t.due.getTime() ? isoDate(t.endDate) : null,

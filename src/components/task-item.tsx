@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Bell, ChevronRight, Star } from "lucide-react";
+import { Bell, ChevronRight, Route, Star } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ItemMenuButton, useItemMenu } from "@/components/item-menu";
 import { SwipeRow } from "@/components/swipe-row";
@@ -11,6 +11,7 @@ import { relDay } from "@/lib/dates";
 import { dragProps, draggedId, isTaskDrag } from "@/lib/dnd";
 import { useApp } from "@/lib/app-context";
 import { reminderLabel } from "@/lib/reminders";
+import { describe, formatTravel, spanOfTask } from "@/lib/travel";
 import type { Task } from "@/types";
 
 /** Linha simples: título + uma linha de apoio. O resto vive no painel lateral. */
@@ -23,6 +24,8 @@ export function TaskItem({ task, showDay, showTime, reorderable }: { task: Task;
   const subsDone = subs.filter((s) => s.done).length;
   const day = showDay ? relDay(task.due, today) : null;
   const sub = [showTime ? task.time : undefined, detail(task)].filter(Boolean).join(" · ");
+  const span = spanOfTask(task);
+  const trip = span && (span.travelTo || span.travelFrom) ? { d: describe(span), span } : null;
 
   return (
     <SwipeRow
@@ -72,6 +75,14 @@ export function TaskItem({ task, showDay, showTime, reorderable }: { task: Task;
           {task.title}
         </p>
         {sub && <p className="truncate text-[0.8125rem] leading-[1.125rem] text-muted-foreground lg:text-[0.8438rem] lg:leading-[1.25rem]">{sub}</p>}
+        {trip && (
+          <p className="flex items-center gap-1.5 truncate text-[0.75rem] leading-[1.125rem] text-muted-foreground/80 lg:text-[0.8125rem]">
+            <Route className="h-3 w-3 shrink-0" strokeWidth={1.7} aria-hidden />
+            <span className="truncate tabular-nums">
+              {[trip.span.travelTo ? `ida ${formatTravel(trip.span.travelTo)}` : null, trip.span.travelFrom ? `volta ${formatTravel(trip.span.travelFrom)}` : null].filter(Boolean).join(" · ")} · ocupado {trip.d.blocked}
+            </span>
+          </p>
+        )}
       </div>
 
       <div className="flex shrink-0 items-center gap-2.5 pt-[0.3125rem] font-mono text-[0.6875rem] text-muted-foreground lg:pt-[0.375rem] lg:text-[0.7813rem]">

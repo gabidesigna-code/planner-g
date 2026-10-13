@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type DragEvent } from "react";
-import { Bell, ChevronLeft, ChevronRight, Plus, Star } from "lucide-react";
+import { Bell, ChevronLeft, ChevronRight, Plus, Route, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ContextSwitch } from "@/components/context-switch";
 import { ViewHeader } from "@/components/view-header";
@@ -14,12 +14,15 @@ import { addDays, byTime, monAbbr, pad2, sameDay, weekStart, weekdayShort } from
 import { dragProps, draggedId, isTaskDrag } from "@/lib/dnd";
 import { matches, useApp } from "@/lib/app-context";
 import { formatDuration, occursOn, scheduledMinutes } from "@/lib/task-utils";
+import { describe, spanOfTask } from "@/lib/travel";
 import type { Task } from "@/types";
 
 /** Um item da semana. No celular, deslizar para a esquerda revela Importante · Editar · Excluir. */
 function WeekCard({ t }: { t: Task }) {
   const { openTask } = useApp();
   const menu = useItemMenu(t);
+  const span = spanOfTask(t);
+  const trip = span && (span.travelTo || span.travelFrom) ? describe(span) : null;
   return (
     <SwipeRow
       task={t}
@@ -47,6 +50,12 @@ function WeekCard({ t }: { t: Task }) {
         </span>
       )}
       <span className={cn("block text-[0.875rem] leading-snug lg:text-[0.8125rem]", t.status === "concluido" && "line-through")}>{t.title}</span>
+      {trip && (
+        <span className="mt-0.5 flex items-center gap-1 font-mono text-[0.625rem] tabular-nums text-muted-foreground" title={`Trajeto incluído: ocupado das ${trip.goStart} às ${trip.backEnd}`}>
+          <Route className="h-2.5 w-2.5 shrink-0" strokeWidth={1.8} aria-hidden />
+          {trip.blocked}
+        </span>
+      )}
       {menu.menu}
     </SwipeRow>
   );

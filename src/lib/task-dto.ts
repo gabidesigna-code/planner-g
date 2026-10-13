@@ -1,4 +1,5 @@
 import { fromIso, isoDate } from "@/lib/dates";
+import { MAX_TRAVEL_MINUTES, cleanTravel } from "@/lib/travel";
 import type { Context, Kind, Priority, Recurrence, Status, Task } from "@/types";
 
 /**
@@ -21,6 +22,9 @@ export interface TaskDto {
   priority: Priority;
   important?: boolean;
   reminderMinutes?: number;
+  travelTo?: number;
+  travelFrom?: number;
+  reminderAtDeparture?: boolean;
   status: Status;
   note?: string;
   waitingOn?: string;
@@ -36,6 +40,7 @@ export function toDto(t: Task): TaskDto {
     due: isoDate(t.due), endDate: t.endDate ? isoDate(t.endDate) : undefined,
     time: t.time, end: t.end, location: t.location, client: t.client,
     priority: t.priority, important: t.important || undefined, reminderMinutes: t.reminderMinutes, status: t.status, note: t.note, waitingOn: t.waitingOn, recurrence: t.recurrence,
+    travelTo: t.travelTo, travelFrom: t.travelFrom, reminderAtDeparture: t.reminderAtDeparture || undefined,
     subtasks: t.subtasks?.map((s) => ({ id: s.id, title: s.title, done: s.done })),
     doneAt: t.doneAt ? t.doneAt.toISOString() : undefined,
     position: t.position,
@@ -48,6 +53,7 @@ export function fromDto(d: TaskDto): Task {
     due: fromIso(d.due), endDate: d.endDate ? fromIso(d.endDate) : undefined,
     time: d.time, end: d.end, location: d.location, client: d.client,
     priority: d.priority, important: d.important || undefined, reminderMinutes: d.reminderMinutes, status: d.status, note: d.note, waitingOn: d.waitingOn, recurrence: d.recurrence,
+    travelTo: d.travelTo, travelFrom: d.travelFrom, reminderAtDeparture: d.reminderAtDeparture || undefined,
     subtasks: d.subtasks?.map((s) => ({ id: s.id, title: s.title, done: s.done })),
     doneAt: d.doneAt ? new Date(d.doneAt) : undefined,
     position: d.position,
@@ -123,24 +129,40 @@ export function parseTaskDto(input: unknown): TaskDto {
   if (doneAt && Number.isNaN(Date.parse(doneAt))) bad("doneAt inválido");
   if (o.important !== undefined && typeof o.important !== "boolean") bad("importante inválido");
   if (o.reminderMinutes !== undefined && o.reminderMinutes !== null && (!Number.isInteger(o.reminderMinutes) || (o.reminderMinutes as number) < 0 || (o.reminderMinutes as number) > 10_080)) bad("lembrete inválido");
+  for (const k of ["travelTo", "travelFrom"] as const) {
+    const v = o[k];
+    if (v !== undefined && v !== null && (!Number.isInteger(v) || (v as number) < 0 || (v as number) > MAX_TRAVEL_MINUTES)) bad("tempo de trajeto inválido");
+  }
+  if (o.reminderAtDeparture !== undefined && typeof o.reminderAtDeparture !== "boolean") bad("aviso de saída inválido");
   if (o.position !== undefined && (typeof o.position !== "number" || !Number.isFinite(o.position))) bad("position inválida");
+
+  const kind = oneOf<Kind>(o.kind, KINDS, "tipo");
+  const time = hm(o.time, "horário");
+  // trajeto só existe em compromisso/evento COM horário; fora disso é descartado (0 = sem trajeto)
+  const trips = kind === "compromisso" || kind === "evento" ? time !== undefined : false;
+  const travelTo = trips ? cleanTravel(o.travelTo) : undefined;
+  const travelFrom = trips ? cleanTravel(o.travelFrom) : undefined;
+  const atDeparture = o.reminderAtDeparture === true && !!travelTo;
 
   return {
     id,
-    kind: oneOf<Kind>(o.kind, KINDS, "tipo"),
+    kind,
     title: str(o.title, "título", 500, true)!,
     context: oneOf<Context>(o.context, CONTEXTS, "contexto"),
     category: str(o.category, "categoria", 100) ?? "Outros",
     topic: str(o.topic, "tópico", 200),
     due: day(o.due, "data", true)!,
     endDate: day(o.endDate, "data final"),
-    time: hm(o.time, "horário"),
+    time,
     end: hm(o.end, "horário final"),
     location: str(o.location, "local", 300),
     client: str(o.client, "cliente", 200),
     priority: oneOf<Priority>(o.priority, PRIORITIES, "prioridade"),
     important: o.important === true ? true : undefined,
-    reminderMinutes: typeof o.reminderMinutes === "number" ? o.reminderMinutes : undefined,
+    reminderMinutes: typeof o.reminderMinutes === "number" && !atDeparture ? o.reminderMinutes : undefined,
+    travelTo,
+    travelFrom,
+    reminderAtDeparture: atDeparture ? true : undefined,
     status: oneOf<Status>(o.status, STATUSES, "status"),
     note: str(o.note, "observações", 10_000),
     waitingOn: str(o.waitingOn, "aguardando", 200),

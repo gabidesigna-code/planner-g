@@ -9,6 +9,8 @@ import { addDays, fromIso, isoDate, weekStart } from "@/lib/dates";
 import { useScrollLock } from "@/hooks/use-scroll-lock";
 import { useApp } from "@/lib/app-context";
 import { REMINDER_OPTIONS, reminderToValue, valueToReminder } from "@/lib/reminders";
+import { TravelFields, TravelSummary, ConflictNotice } from "@/components/travel-fields";
+import { conflictsOfTask, spanOfTask } from "@/lib/travel";
 import {
   KIND_LABEL, PRIORITY_LABEL, RECURRENCE_LABEL, STATUS_LABEL,
   type Context, type Priority, type Recurrence, type Status, type Task,
@@ -39,7 +41,7 @@ export function SidePanel() {
 }
 
 function PanelBody({ task }: { task: Task }) {
-  const { update, remove, toggle, toggleSub, toggleImportant, openTask, today, categoryNames, push } = useApp();
+  const { update, remove, toggle, toggleSub, toggleImportant, openTask, today, categoryNames, push, tasks } = useApp();
   useScrollLock(true, "(max-width: 639px)");
   const [newSub, setNewSub] = useState("");
   const ctx = CTX[task.context];
@@ -47,6 +49,10 @@ function PanelBody({ task }: { task: Task }) {
   const subs = task.subtasks ?? [];
   const subsDone = subs.filter((s) => s.done).length;
   const set = (patch: Partial<Task>) => update(task.id, patch);
+  const isEvent = task.kind === "compromisso" || task.kind === "evento";
+  const travelSpan = isEvent ? spanOfTask(task) : null;
+  const conflicts = travelSpan ? conflictsOfTask(task, tasks) : [];
+  const leaving = !!task.reminderAtDeparture && !!task.travelTo;
 
   function addSub() {
     const title = newSub.trim();
@@ -142,7 +148,7 @@ function PanelBody({ task }: { task: Task }) {
         )}
         <Row label="Horário">
           <div className="flex items-center gap-1">
-            <input type="time" value={task.time ?? ""} onChange={(e) => set({ time: e.target.value || undefined, end: e.target.value ? task.end : undefined, ...(e.target.value ? {} : { reminderMinutes: undefined }) })} className={prop} aria-label="Início" />
+            <input type="time" value={task.time ?? ""} onChange={(e) => set({ time: e.target.value || undefined, end: e.target.value ? task.end : undefined, ...(e.target.value ? {} : { reminderMinutes: undefined, travelTo: undefined, travelFrom: undefined, reminderAtDeparture: undefined }) })} className={prop} aria-label="Início" />
             <span className="text-muted-foreground/50">→</span>
             <input type="time" value={task.end ?? ""} disabled={!task.time} onChange={(e) => set({ end: e.target.value || undefined })} className={cn(prop, "disabled:opacity-40")} aria-label="Fim" />
           </div>
@@ -150,14 +156,29 @@ function PanelBody({ task }: { task: Task }) {
         {task.time && (
           <Row label="Lembrar">
             <select
-              value={reminderToValue(task.reminderMinutes)}
-              onChange={(e) => { set({ reminderMinutes: valueToReminder(e.target.value) }); if (e.target.value !== "") push.ask(); }}
+              value={leaving ? "leave" : reminderToValue(task.reminderMinutes)}
+              onChange={(e) => {
+                const v = e.target.value;
+                set(v === "leave" ? { reminderAtDeparture: true, reminderMinutes: undefined } : { reminderAtDeparture: undefined, reminderMinutes: valueToReminder(v) });
+                if (v !== "") push.ask();
+              }}
               className={prop}
               aria-label="Lembrar"
             >
               {REMINDER_OPTIONS.map((o) => <option key={o.label} value={reminderToValue(o.minutes)}>{o.label}</option>)}
+              {isEvent && task.travelTo ? <option value="leave">Na hora de sair</option> : null}
             </select>
           </Row>
+        )}
+        {isEvent && task.time && (
+          <div className="mt-1 flex flex-col gap-2">
+            <TravelFields
+              value={{ to: task.travelTo, from: task.travelFrom }}
+              onChange={(v) => set({ travelTo: v.to, travelFrom: v.from, ...(v.to ? {} : { reminderAtDeparture: undefined }) })}
+            />
+            <TravelSummary span={travelSpan} />
+            <ConflictNotice conflicts={conflicts} />
+          </div>
         )}
         {(task.kind === "compromisso" || task.kind === "evento") && (
           <Row label="Local">

@@ -1,5 +1,6 @@
 import "server-only";
 import { aiEnvelopeSchema, aiItemSchema, type ProposedItem } from "@/lib/ai/schema";
+import { cleanTravel } from "@/lib/travel";
 
 /**
  * Integração com o Gemini. Roda SÓ no servidor: a chave (GEMINI_API_KEY) nunca vai ao navegador,
@@ -65,6 +66,10 @@ export function calendarContext(today: Date): string {
 
 // ------------------------------------------------------------------ prompt
 
+/** Regra de trajeto, igual no "Organizar com ori" e no chat. */
+export const TRAVEL_RULES = `- Tempo de trajeto (SÓ em appointment/event COM hora): se ela disser quanto leva para ir e/ou voltar ("20 minutos pra ir e 1h20 pra voltar", "ida de 30 min", "uns 40 minutos de deslocamento de ida e de volta"), preencha travelToMinutes (ida) e travelFromMinutes (volta) em minutos inteiros. Ida e volta são INDEPENDENTES: preencha só o que ela disse; se citar um único tempo "de ida e volta" para cada sentido, use o mesmo valor nos dois. Se não falou de trajeto: null. Nunca invente trajeto.
+  O trajeto NÃO faz parte da duração do compromisso: "consulta às 15h, dura uma hora, 20 min pra ir e 1h20 pra voltar" = time 15:00, endTime 16:00, travelToMinutes 20, travelFromMinutes 80.`;
+
 function systemPrompt(today: Date, categories: Cat[]): string {
   const cats = (ctx: string) => categories.filter((c) => c.context === ctx).map((c) => c.name).join(", ") || "(nenhuma)";
   return `Você organiza a agenda pessoal de uma contadora brasileira. Transforme o texto do usuário em itens de agenda.
@@ -95,6 +100,7 @@ Regras:
 - title: curto e claro, começando por verbo nas tarefas ("Conciliar extrato FCA", "Enviar ISS Transmartins") e por substantivo nos compromissos ("Reunião FCA"). Inclua o cliente no título quando houver.
 - priority: "normal" por padrão; "urgente" ou "alta" só se o texto indicar urgência ou importância.
 - notes: só detalhes úteis do texto que não cabem nos outros campos; senão null.
+${TRAVEL_RULES}
 - Não acrescente informações que o usuário não disse (ex.: não troque "consulta" por "consulta médica"). Não crie itens que o usuário não pediu. Se o texto não tiver nada para organizar, devolva {"items": []}.`;
 }
 
@@ -118,6 +124,8 @@ export const RESPONSE_SCHEMA = {
           clientProject: { type: "STRING", nullable: true },
           notes: { type: "STRING", nullable: true },
           recurrence: { type: "STRING", nullable: true, enum: ["daily", "weekly", "monthly", "yearly"] },
+          travelToMinutes: { type: "INTEGER", nullable: true, description: "minutos de ida (antes do início)" },
+          travelFromMinutes: { type: "INTEGER", nullable: true, description: "minutos de volta (depois do fim)" },
         },
         required: ["type", "title", "context", "date", "priority"],
       },
@@ -143,6 +151,8 @@ export function normalizeItems(raw: unknown, categories: Cat[]): ProposedItem[] 
     const known = categories.find((c) => c.context === it.context && it.category && fold(c.name) === fold(it.category));
     const time = it.time ?? undefined;
     const endTime = time && it.endTime && it.endTime > time ? it.endTime : undefined;
+    // trajeto só em compromisso/evento com hora (0 e vazio = sem trajeto)
+    const trips = !!time && (it.type === "appointment" || it.type === "event");
     out.push({
       type: it.type,
       title: it.title,
@@ -155,6 +165,8 @@ export function normalizeItems(raw: unknown, categories: Cat[]): ProposedItem[] 
       client: it.context === "trabalho" ? it.clientProject || undefined : undefined,
       notes: it.notes || undefined,
       recurrence: it.recurrence ?? undefined,
+      travelTo: trips ? cleanTravel(it.travelToMinutes) : undefined,
+      travelFrom: trips ? cleanTravel(it.travelFromMinutes) : undefined,
     });
   }
   return out;

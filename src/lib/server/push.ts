@@ -27,6 +27,8 @@ export const sendRequestSchema = z.object({
         title: z.string().max(300),
         kind: z.string().max(20),
         minutes_before: z.number().int().min(0).max(10_080),
+        /** true = "na hora de sair" (minutes_before é o tempo de ida) */
+        at_departure: z.boolean().optional(),
         time: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d/),
         subscriptions: z
           .array(z.object({ endpoint: z.string().max(2048), p256dh: z.string().max(256), auth: z.string().max(128) }))

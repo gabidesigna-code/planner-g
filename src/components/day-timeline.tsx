@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type CSSProperties, type DragEvent, type MouseEvent } from "react";
-import { Bell, Star } from "lucide-react";
+import { ArrowDownRight, ArrowUpRight, Bell, Star } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { SwipeRow } from "@/components/swipe-row";
 import { useItemMenu } from "@/components/item-menu";
@@ -11,6 +11,7 @@ import { CTX } from "@/lib/context";
 import { fromMin, pad2, toMin } from "@/lib/dates";
 import { dragProps, draggedId, isTaskDrag } from "@/lib/dnd";
 import { useApp } from "@/lib/app-context";
+import { formatTravel, travelOf } from "@/lib/travel";
 import type { Task } from "@/types";
 
 /** Altura de uma hora na linha do tempo. */
@@ -30,7 +31,8 @@ function useHourHeight() {
 }
 
 
-interface Ev { t: Task; s: number; e: number; col: number; cols: number }
+/** s–e = o compromisso; bs–be = o período ocupado de verdade (ida + compromisso + volta, cortado nas bordas do dia). */
+interface Ev { t: Task; s: number; e: number; bs: number; be: number; col: number; cols: number }
 
 /** Posiciona eventos lado a lado quando se sobrepõem. */
 function layout(tasks: Task[]): Ev[] {
@@ -39,9 +41,11 @@ function layout(tasks: Task[]): Ev[] {
       const s = toMin(t.time!);
       let e = t.end ? toMin(t.end) : s + 45;
       if (e <= s) e = s + 30;
-      return { t, s, e, col: 0, cols: 1 };
+      // trajeto só se desenha em item de um dia só
+      const trip = t.endDate && t.endDate > t.due ? { to: 0, from: 0 } : travelOf(t);
+      return { t, s, e, bs: Math.max(0, s - trip.to), be: Math.min(1440, e + trip.from), col: 0, cols: 1 };
     })
-    .sort((a, b) => a.s - b.s || a.e - b.e);
+    .sort((a, b) => a.bs - b.bs || a.be - b.be);
 
   let cluster: Ev[] = [];
   let colEnds: number[] = [];
@@ -53,15 +57,15 @@ function layout(tasks: Task[]): Ev[] {
     clusterEnd = -1;
   };
   for (const ev of evs) {
-    if (cluster.length && ev.s >= clusterEnd) flush();
-    let col = colEnds.findIndex((end) => end <= ev.s);
+    if (cluster.length && ev.bs >= clusterEnd) flush();
+    let col = colEnds.findIndex((end) => end <= ev.bs);
     if (col === -1) {
       col = colEnds.length;
-      colEnds.push(ev.e);
-    } else colEnds[col] = ev.e;
+      colEnds.push(ev.be);
+    } else colEnds[col] = ev.be;
     ev.col = col;
     cluster.push(ev);
-    clusterEnd = Math.max(clusterEnd, ev.e);
+    clusterEnd = Math.max(clusterEnd, ev.be);
   }
   flush();
   return evs;
@@ -76,8 +80,8 @@ export function DayTimeline({ tasks }: { tasks: Task[] }) {
   const [hover, setHover] = useState<number | null>(null);
 
   const evs = layout(tasks);
-  const first = evs.length ? Math.floor(evs[0].s / 60) : 9;
-  const last = evs.length ? Math.ceil(Math.max(...evs.map((e) => e.e)) / 60) : 18;
+  const first = evs.length ? Math.floor(Math.min(...evs.map((e) => e.bs)) / 60) : 9;
+  const last = evs.length ? Math.ceil(Math.max(...evs.map((e) => e.be)) / 60) : 18;
   const startH = Math.min(8, first - 1);
   const endH = Math.max(19, last);
   const height = (endH - startH) * HOUR_H;
@@ -173,18 +177,22 @@ export function DayTimeline({ tasks }: { tasks: Task[] }) {
         </div>
       )}
 
-      {evs.map(({ t, s, e, col, cols }) => (
-        <TimelineBlock
-          key={t.id}
-          t={t}
-          h={Math.max(((e - s) / 60) * HOUR_H - 5, 36)}
-          style={{
-            top: topOf(s) + 2,
-            left: `calc(var(--g) + 10px + (100% - var(--g) - 10px) * ${col / cols})`,
-            width: `calc((100% - var(--g) - 10px) / ${cols} - 4px)`,
-          }}
-        />
-      ))}
+      {evs.map(({ t, s, e, bs, be, col, cols }) => {
+        const h = Math.max(((e - s) / 60) * HOUR_H - 5, 36);
+        const style: CSSProperties = {
+          left: `calc(var(--g) + 10px + (100% - var(--g) - 10px) * ${col / cols})`,
+          width: `calc((100% - var(--g) - 10px) / ${cols} - 4px)`,
+        };
+        // o bloco mínimo (36px) pode passar do fim real: a faixa de volta começa depois dele
+        const spill = Math.max(0, h - (((e - s) / 60) * HOUR_H - 5));
+        return (
+          <div key={t.id} className="contents">
+            {s > bs && <TravelBand t={t} dir="go" minutes={t.travelTo!} style={{ ...style, top: topOf(bs) + 2, height: topOf(s) - topOf(bs) - 2 }} />}
+            <TimelineBlock t={t} h={h} style={{ ...style, top: topOf(s) + 2 }} />
+            {be > e && <TravelBand t={t} dir="back" minutes={t.travelFrom!} style={{ ...style, top: topOf(e) + 2 + spill, height: topOf(be) - topOf(e) - 2 - spill }} />}
+          </div>
+        );
+      })}
 
       {showNow && (
         <div className="pointer-events-none absolute inset-x-0 z-10" style={{ top: topOf(nowMin!) }}>
@@ -203,6 +211,36 @@ export function DayTimeline({ tasks }: { tasks: Task[] }) {
         </p>
       )}
     </div>
+  );
+}
+
+/** Faixa discreta de trajeto (ida antes, volta depois) ligada ao compromisso: não é outro item, só o mesmo compromisso. */
+function TravelBand({ t, dir, minutes, style }: { t: Task; dir: "go" | "back"; minutes: number; style: CSSProperties }) {
+  const { openTask } = useApp();
+  const Icon = dir === "go" ? ArrowUpRight : ArrowDownRight;
+  const h = Number(style.height);
+  if (!(h >= 4)) return null;
+  const label = `Trajeto de ${dir === "go" ? "ida" : "volta"} (${formatTravel(minutes)}): ${t.title}`;
+  return (
+    <button
+      type="button"
+      onClick={(ev) => { ev.stopPropagation(); openTask(t.id); }}
+      aria-label={label}
+      title={label}
+      style={style}
+      className={cn(
+        "travel-band absolute flex items-center gap-1 overflow-hidden rounded-md px-2 text-left text-[0.625rem] leading-none lg:px-3 lg:text-[0.6875rem]",
+        CTX[t.context].text,
+        t.status === "concluido" && "opacity-50",
+      )}
+    >
+      {h >= 14 && (
+        <>
+          <Icon className="h-2.5 w-2.5 shrink-0" strokeWidth={2} aria-hidden />
+          <span className="truncate text-muted-foreground">Trajeto{h >= 18 ? ` · ${formatTravel(minutes)}` : ""}</span>
+        </>
+      )}
+    </button>
   );
 }
 

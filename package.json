@@ -14,7 +14,8 @@
     "test:live": "node scripts/test-multiuser-live.mjs",
     "fake:supabase": "node scripts/fake-supabase.mjs",
     "export:pwa": "node scripts/export-pwa-icons.mjs",
-    "test:push": "node --conditions=react-server --experimental-transform-types --no-warnings scripts/test-push.mjs"
+    "test:push": "node --conditions=react-server --experimental-transform-types --no-warnings scripts/test-push.mjs",
+    "test:travel": "node --conditions=react-server --experimental-transform-types --no-warnings scripts/test-travel.mjs"
   },
   "dependencies": {
     "@radix-ui/react-checkbox": "^1.1.4",

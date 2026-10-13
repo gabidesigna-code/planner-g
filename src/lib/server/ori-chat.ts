@@ -1,8 +1,9 @@
 import "server-only";
 import type { TaskDto } from "@/lib/task-dto";
 import { chatReplySchema, type OriChatResponse, type OriChatTurn } from "@/lib/ai/chat-schema";
-import { AiError, RESPONSE_SCHEMA, calendarContext, geminiGenerate, normalizeItems, todayInSaoPaulo } from "./gemini";
+import { AiError, RESPONSE_SCHEMA, TRAVEL_RULES, calendarContext, geminiGenerate, normalizeItems, todayInSaoPaulo } from "./gemini";
 import { buildChangeProposal, buildChoices, taskRef, type AskContext } from "./ori-actions";
+import { attachConflicts, describe, formatTravel, spanOfIso } from "@/lib/travel";
 
 /**
  * Chat da ori. Usa a MESMA porta de saída do "Organizar com ori" (geminiGenerate): mesma chave, modelo, timeout e erros.
@@ -16,6 +17,18 @@ const pad = (n: number) => String(n).padStart(2, "0");
 const iso = (d: Date) => `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())}`;
 const clip = (s: string, n: number) => (s.length > n ? `${s.slice(0, n - 1)}…` : s);
 
+/** "ida 20 min · volta 1h20 · ocupado 14:40–17:20 (precisa sair às 14:40)" — só para compromisso/evento com trajeto. */
+function travelNote(t: TaskDto): string | null {
+  const span = spanOfIso({ kind: t.kind, date: t.due, endDate: t.endDate, time: t.time, end: t.end, travelTo: t.travelTo, travelFrom: t.travelFrom });
+  if (!span || (!span.travelTo && !span.travelFrom)) return null;
+  const d = describe(span);
+  return [
+    span.travelTo ? `ida ${formatTravel(span.travelTo)}` : null,
+    span.travelFrom ? `volta ${formatTravel(span.travelFrom)}` : null,
+    `OCUPADO ${d.blocked}${d.leaveAt ? ` (precisa sair às ${d.leaveAt})` : ""}`,
+  ].filter(Boolean).join(" · ");
+}
+
 const line = (t: TaskDto) =>
   [
     `- [${taskRef(t.id)}] ${t.due}${t.time ? ` ${t.time}${t.end ? `-${t.end}` : ""}` : ""}`,
@@ -25,6 +38,7 @@ const line = (t: TaskDto) =>
     t.category && t.category !== "Outros" ? clip(t.category, 24) : null,
     t.priority !== "normal" ? `prioridade ${t.priority}` : null,
     t.important ? "importante" : null,
+    travelNote(t),
     t.status,
     t.waitingOn ? `aguardando ${clip(t.waitingOn, 30)}` : null,
     t.recurrence && t.recurrence !== "none" ? `repete ${t.recurrence}` : null,
@@ -83,6 +97,13 @@ REGRAS
 - Para CRIAR itens (tarefa, compromisso, lembrete, evento) quando ela pedir ou descrever algo para marcar: preencha "items" com os itens, usando as mesmas regras de datas e horários da tabela acima (datas AAAA-MM-DD, hora HH:MM só se ela disser). No "reply", diga em uma frase o que entendeu e pergunte se pode adicionar. Você NÃO salva nada: ela confirma na tela.
 - Cada item: type (task = coisa a fazer; appointment = compromisso com hora marcada; reminder; event), title curto (verbo nas tarefas, substantivo nos compromissos, com o cliente no título quando houver), context (trabalho para clientes, impostos, financeiro, reuniões de trabalho; pessoal para saúde, casa, compras, família), category (UMA das categorias acima do mesmo contexto, ou null), clientProject (nome do cliente/empresa, ou null), priority (normal, salvo urgência dita), recurrence só se ela disser "todo dia/semana/mês/ano". Tarefas "antes" de um compromisso ficam na mesma data e sem hora.
 - Se não houver nada a criar, devolva "items": [].
+${TRAVEL_RULES}
+
+TEMPO DE TRAJETO E DISPONIBILIDADE
+- Na agenda, um compromisso com trajeto traz "ida", "volta" e "OCUPADO hh:mm–hh:mm". O OCUPADO (ida + compromisso + volta) é o tempo REAL em que ela não está livre; o horário do compromisso é só a parte do meio. Compromissos sem esses campos ocupam só o início–fim.
+- Ao responder "tenho tempo?", "estou livre?", "o que cabe antes/depois?", considere SEMPRE o OCUPADO. Exemplo: Consulta 15:00 com ida de 20 min => ela precisa sair às 14:40; às 14:30 ela tem só 10 minutos livres antes de sair. Se a volta é 1h20 e a consulta termina 16:00, ela só volta a ficar livre às 17:20.
+- Ao propor criar um compromisso com trajeto, no "reply" diga o compromisso e o período total ocupado (ex.: "Consulta, amanhã 15:00–16:00, ida 20 min e volta 1h20: ocupa 14:40–17:20. Posso adicionar?"). Se o horário novo cair no trajeto de outro compromisso, avise no "reply" (o app também mostra o aviso).
+- Para mudar o trajeto de um compromisso que já existe, use update com travelTo (minutos de ida) e/ou travelFrom (minutos de volta); 0 tira só aquele trecho e clearTravel (true) tira os dois. Reagendar mantém o trajeto.
 
 ALTERAR ITENS QUE JÁ EXISTEM (você só PROPÕE: nunca executa; ela confirma na tela e o app confere tudo antes)
 - Para editar (update), mudar data/horário (reschedule), concluir (complete), reabrir (reopen) ou apagar (delete) um item existente, preencha "actions". Cada ação tem: action; entityId = a referência curta [xxxxxxxx] copiada EXATAMENTE da agenda acima (nunca invente); changes só para update/reschedule.
@@ -140,9 +161,12 @@ const ACTIONS_SCHEMA = {
           notes: nullableStr,
           appendNote: nullableStr,
           clearNotes: nullableBool,
+          travelTo: { type: "INTEGER", nullable: true, description: "minutos de ida" },
+          travelFrom: { type: "INTEGER", nullable: true, description: "minutos de volta" },
+          clearTravel: nullableBool,
         },
         // todos obrigatórios (anuláveis): o modelo precisa DECIDIR cada campo, em vez de omitir o objeto inteiro
-        required: ["title", "date", "time", "endTime", "removeTime", "priority", "category", "context", "client", "clearClient", "notes", "appendNote", "clearNotes"],
+        required: ["title", "date", "time", "endTime", "removeTime", "priority", "category", "context", "client", "clearClient", "notes", "appendNote", "clearNotes", "travelTo", "travelFrom", "clearTravel"],
       },
     },
     required: ["action", "entityId", "selector", "changes"],
@@ -194,7 +218,7 @@ export async function chatWithOri(
   const reply = chatReplySchema.safeParse(parsed);
   if (!reply.success) throw new AiError("A ori devolveu uma resposta fora do formato esperado. Tente de novo.", 502);
 
-  const items = normalizeItems({ items: reply.data.items }, ctx.categories);
+  const items = attachConflicts(normalizeItems({ items: reply.data.items }, ctx.categories), ctx.tasks);
   const { proposal, invalid, ambiguous } = buildChangeProposal(reply.data.actions, ctx.tasks, ctx.categories, iso(today), askContext(trimmed));
   const out: OriChatResponse = { reply: reply.data.reply, items };
 

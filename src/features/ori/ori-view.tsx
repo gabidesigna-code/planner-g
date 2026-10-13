@@ -18,12 +18,13 @@ import { MAX_CHAT_TEXT, type ChangeEntry } from "@/lib/ai/chat-schema";
 import { oriActionSchema, sameGuarded } from "@/lib/ai/actions";
 import { fromDto, toDto } from "@/lib/task-dto";
 import type { ProposedItem } from "@/lib/ai/schema";
+import { ProposedTravel } from "@/components/travel-fields";
 import { KIND_LABEL, RECURRENCE_LABEL, type Task } from "@/types";
 
 /** Por quanto tempo o "Desfazer" do cartão fica disponível depois de excluir. */
 const UNDO_MS = 12_000;
 /** Campos que uma alteração pode mexer (nomes do TaskDto = nomes do Task). */
-const PATCH_KEYS = ["title", "due", "endDate", "time", "end", "priority", "context", "category", "client", "topic", "note"] as const;
+const PATCH_KEYS = ["title", "due", "endDate", "time", "end", "priority", "context", "category", "client", "topic", "note", "travelTo", "travelFrom", "reminderAtDeparture"] as const;
 
 const SUGGESTIONS = [
   "O que ainda falta hoje?",
@@ -80,6 +81,7 @@ function Proposal({ msg, onConfirm, onDismiss }: { msg: OriMessage; onConfirm: (
                 <span>{[KIND_LABEL[KIND_OF[it.type]], it.client, it.category !== "Outros" ? it.category : null].filter(Boolean).join(" · ")}</span>
                 {it.recurrence && <span className="inline-flex items-center gap-1"><Repeat className="h-3 w-3" strokeWidth={1.8} />{RECURRENCE_LABEL[it.recurrence]}</span>}
               </p>
+              <ProposedTravel item={it} />
             </div>
           </li>
         ))}

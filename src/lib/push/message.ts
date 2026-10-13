@@ -1,4 +1,4 @@
-import { spokenTime } from "@/lib/ori-greeting";
+import { atTime, spokenTime } from "@/lib/ori-greeting";
 
 /**
  * Texto das notificações: a ori avisando, curto e direto.
@@ -14,6 +14,8 @@ export interface ReminderNotice {
   /** tarefa | lembrete | compromisso | evento */
   kind: string;
   minutes_before: number;
+  /** "na hora de sair": o aviso é para sair, não para o início (minutes_before = tempo de ida) */
+  at_departure?: boolean;
   /** horário do item, HH:MM, no fuso da pessoa */
   time: string;
 }
@@ -43,6 +45,7 @@ export function buildMessage(n: ReminderNotice): { title: string; body: string; 
   const title = clip(n.title, 60);
   const name = n.name.trim();
   const who = name ? `${name}, ` : "";
+  if (n.at_departure) return { title: NOTIFICATION_TITLE, body: upperFirst(`${who}é hora de sair para “${title}” ${atTime(n.time)}.`), tag: n.tag };
   const appointment = n.kind === "compromisso" || n.kind === "evento";
   const noun = n.kind === "evento" ? "evento" : "compromisso";
   const day = n.minutes_before >= 1440; // "1 dia antes" ou mais: fala do horário, não de "daqui a N"

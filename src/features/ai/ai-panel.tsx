@@ -13,6 +13,7 @@ import { useApp } from "@/lib/app-context";
 import { api } from "@/services/api-client";
 import { MAX_AI_TEXT, type AiItemType, type ProposedItem } from "@/lib/ai/schema";
 import { KIND_LABEL, RECURRENCE_LABEL, type Context, type Kind, type Task } from "@/types";
+import { ProposedTravel } from "@/components/travel-fields";
 
 const KIND_OF: Record<AiItemType, Kind> = { task: "tarefa", appointment: "compromisso", reminder: "lembrete", event: "evento" };
 
@@ -42,6 +43,8 @@ export function toTask(it: ProposedItem): Task {
     end: slot ? (it.endTime ?? fromMin(Math.min(toMin(it.time!) + 60, 23 * 60 + 59))) : undefined,
     note: it.notes,
     recurrence: it.recurrence,
+    travelTo: slot ? it.travelTo : undefined,
+    travelFrom: slot ? it.travelFrom : undefined,
   };
 }
 
@@ -204,6 +207,7 @@ export function AiPanel({ open, initialText, onClose, onCreate }: {
                           )}
                         </p>
                         {r.notes && <p className="mt-1 text-[0.8125rem] text-muted-foreground/80">{r.notes}</p>}
+                        <ProposedTravel item={r} />
                       </div>
                       <button
                         onClick={() => setEditing(editing === r.key ? null : r.key)}

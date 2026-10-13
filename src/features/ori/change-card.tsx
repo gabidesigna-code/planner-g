@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 import type { ChangeEntry } from "@/lib/ai/chat-schema";
 import type { OriMessage } from "@/hooks/use-ori-chats";
 import type { TaskDto } from "@/lib/task-dto";
+import { describe, formatTravel, spanOfIso } from "@/lib/travel";
 import { PRIORITY_LABEL, STATUS_LABEL } from "@/types";
 
 /* ------------------------------------------------------------------ formatação do antes/depois */
@@ -25,11 +26,19 @@ export function useWhen() {
   };
 }
 
+/** "ida 20 min · volta 1h20 (ocupado 14:40–17:20)" ou "—" */
+function travelText(t: TaskDto): string {
+  const span = spanOfIso({ kind: t.kind, date: t.due, endDate: t.endDate, time: t.time, end: t.end, travelTo: t.travelTo, travelFrom: t.travelFrom });
+  if (!span || (!span.travelTo && !span.travelFrom)) return "—";
+  return `${[span.travelTo ? `ida ${formatTravel(span.travelTo)}` : null, span.travelFrom ? `volta ${formatTravel(span.travelFrom)}` : null].filter(Boolean).join(" · ")} (ocupado ${describe(span).blocked})`;
+}
+
 type Row = { key: string; label: string; of: (t: TaskDto, when: (t: TaskDto) => string) => string };
 
 const ROWS: Row[] = [
   { key: "title", label: "Título", of: (t) => t.title },
   { key: "when", label: "Quando", of: (t, when) => when(t) },
+  { key: "travel", label: "Trajeto", of: travelText },
   { key: "status", label: "Situação", of: (t) => STATUS_LABEL[t.status] },
   { key: "priority", label: "Prioridade", of: (t) => PRIORITY_LABEL[t.priority] },
   { key: "context", label: "Contexto", of: (t) => CTX[t.context].label },

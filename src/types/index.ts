@@ -35,6 +35,12 @@ export interface Task {
   important?: boolean;
   /** Lembrete: minutos ANTES do horário em que a ori avisa (0 = na hora). Sem valor = sem lembrete. Só vale com horário. */
   reminderMinutes?: number;
+  /** Compromisso/evento com horário: minutos de ida ANTES do início. Sem valor = sem trajeto de ida. */
+  travelTo?: number;
+  /** Compromisso/evento com horário: minutos de volta DEPOIS do fim. Independe da ida. */
+  travelFrom?: number;
+  /** Avisar "na hora de sair" (início − ida). Exclui reminderMinutes e exige travelTo. */
+  reminderAtDeparture?: boolean;
   status: Status;
   note?: string;
   /** Quem está sendo aguardado: cliente, banco, prefeitura, Receita, convênio… */

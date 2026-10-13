@@ -1,6 +1,7 @@
 import { authed, readJson, json } from "@/lib/server/api";
 import { AiError, isAiConfigured, organizeWithGemini } from "@/lib/server/gemini";
-import { listCategories } from "@/lib/server/agenda-db";
+import { listCategories, loadAgenda } from "@/lib/server/agenda-db";
+import { attachConflicts } from "@/lib/travel";
 import { MAX_AI_TEXT, type OrganizeResponse } from "@/lib/ai/schema";
 import { ValidationError } from "@/lib/task-dto";
 
@@ -19,7 +20,8 @@ export const POST = authed(async (request, { db, userId }) => {
   if (!isAiConfigured()) return json({ error: "A ori ainda não está configurada: falta a GEMINI_API_KEY no servidor." }, 503);
 
   try {
-    const items = await organizeWithGemini(text, await listCategories(db, userId));
+    const [categories, agenda] = await Promise.all([listCategories(db, userId), loadAgenda(db, userId)]);
+    const items = attachConflicts(await organizeWithGemini(text, categories), agenda.tasks);
     return { items } satisfies OrganizeResponse;
   } catch (e) {
     if (e instanceof AiError) return json({ error: e.message }, e.status);

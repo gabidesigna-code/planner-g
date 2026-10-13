@@ -1,6 +1,7 @@
 import { z } from "zod";
 import type { TaskDto } from "@/lib/task-dto";
 import type { Kind } from "@/types";
+import { cleanTravel } from "@/lib/travel";
 
 /**
  * Camada estruturada de ações da ori sobre itens EXISTENTES.
@@ -43,6 +44,9 @@ export const changesSchema = z.object({
   notes: z.string().trim().max(2000).nullable().optional(),
   /** acrescenta ao fim das observações atuais */
   appendNote: z.string().trim().min(1).max(2000).optional(),
+  /** minutos de ida / de volta (compromisso e evento com horário); 0 ou null = tirar aquele trecho */
+  travelTo: z.number().int().min(0).max(720).nullable().optional(),
+  travelFrom: z.number().int().min(0).max(720).nullable().optional(),
 }).strict();
 export type Changes = z.infer<typeof changesSchema>;
 
@@ -93,6 +97,7 @@ export function modelChanges(raw: Record<string, unknown> | null | undefined): R
     if (k === "removeTime") { if (v === true) { out.time = null; out.endTime = null; } continue; }
     if (k === "clearClient") { if (v === true) out.client = null; continue; }
     if (k === "clearNotes") { if (v === true) out.notes = null; continue; }
+    if (k === "clearTravel") { if (v === true) { out.travelTo = 0; out.travelFrom = 0; } continue; }
     out[k] = v;
   }
   return out;
@@ -119,7 +124,7 @@ export interface ApplyContext {
 const fold = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
 
 /** Campos que a ori enxerga/compara; se algum mudar entre a prévia e a execução, a execução é recusada. */
-export const GUARDED_FIELDS = ["title", "due", "time", "end", "endDate", "priority", "category", "context", "client", "note", "status", "kind"] as const;
+export const GUARDED_FIELDS = ["title", "due", "time", "end", "endDate", "priority", "category", "context", "client", "note", "status", "kind", "travelTo", "travelFrom", "reminderAtDeparture"] as const;
 export const sameGuarded = (a: TaskDto, b: TaskDto) => GUARDED_FIELDS.every((k) => (a[k] ?? null) === (b[k] ?? null));
 
 /** O item como ficará depois da ação (nunca altera o original). `delete` devolve null. */
@@ -156,6 +161,21 @@ export function applyAction(before: TaskDto, action: OriAction, ctx: ApplyContex
     else ignored.push("horário final ignorado (precisa ser depois do início)");
   }
   if (!after.time) after.end = undefined;
+
+  // trajeto: só compromisso/evento com horário. Sem horário (ou sem ida) o que dependia dele sai junto
+  if (c.travelTo !== undefined || c.travelFrom !== undefined) {
+    if (before.kind !== "compromisso" && before.kind !== "evento") ignored.push("tempo de trajeto só vale para compromissos e eventos");
+    else if (!after.time) ignored.push("tempo de trajeto ignorado (o item precisa ter horário)");
+    else {
+      if (c.travelTo !== undefined) after.travelTo = cleanTravel(c.travelTo);
+      if (c.travelFrom !== undefined) after.travelFrom = cleanTravel(c.travelFrom);
+    }
+  }
+  if (!after.time) {
+    after.travelTo = undefined;
+    after.travelFrom = undefined;
+  }
+  if (!after.travelTo) after.reminderAtDeparture = undefined;
 
   // contexto → categoria e cliente continuam coerentes (categorias são por contexto)
   const context = c.context ?? before.context;
